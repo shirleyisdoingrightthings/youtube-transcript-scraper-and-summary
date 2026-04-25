@@ -4,6 +4,13 @@
 
 > **环境配置与使用指南** → [PLAYBOOK.md](PLAYBOOK.md)
 
+<details>
+<summary>📄 查看完整 Blog 预览图</summary>
+
+![Blog 输出预览](full_demo.png)
+
+</details>
+
 ---
 
 ## 工作流
