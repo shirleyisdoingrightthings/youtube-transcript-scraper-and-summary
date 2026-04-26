@@ -3,6 +3,7 @@
 将 Blog Markdown 文件上传到 Notion Resources Library 数据库。
 Usage: python3 notion_upload.py <markdown_file_path> <youtube_url>
 """
+from __future__ import annotations
 
 import sys
 import re
@@ -158,7 +159,7 @@ def parse_markdown(content: str) -> tuple[str, list]:
 # Notion API 操作
 # ───────────────────────────────────────────
 
-def find_existing_page(youtube_url: str) -> "str | None":
+def find_existing_page(youtube_url: str) -> str | None:
     """查询数据库中是否已存在相同 URL 的页面，返回 page_id 或 None"""
     resp = requests.post(
         f"https://api.notion.com/v1/databases/{DATABASE_ID}/query",
