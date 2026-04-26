@@ -5,6 +5,16 @@
 
 ---
 
+**[2026-04-26]** ✅ 成功
+- 视频：How Anthropic's product team moves faster than anyone else | Cat Wu (Head of Product, Claude Code)
+- URL：https://youtu.be/PplmzlgE0kg
+- 字幕抓取：成功，--output 单次调用落地 transcript.json（修复点 #2 验证通过）
+- Notion 上传：成功，幂等性逻辑触发"首次创建"路径（修复点 #1 验证通过）；发现 Python 3.9 兼容性问题（str | None 语法），已修复为字符串注解
+- Obsidian 同步：成功
+- 新发现问题：notion_upload.py 使用了 Python 3.10+ 语法（str | None），在系统 Python 3.9 下报 TypeError，已热修复
+
+---
+
 **[2026-04-25]** ✅ 成功
 - 视频：The Supply and Demand of AI Tokens | Dylan Patel Interview
 - URL：https://youtu.be/LF3aUIM57uw
