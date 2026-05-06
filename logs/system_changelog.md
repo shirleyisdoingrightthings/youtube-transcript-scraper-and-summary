@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-05-06]
+- **升级模块**：`CLAUDE.md`
+- **变更详情**：
+  1. **(Fix 1) Success Silence — 输出信号规范**：在 Step 1、Step 3、Step 4（Notion + Obsidian）各自新增"输出信号（Output Signal）"规范。成功路径仅输出一行简报，不返回 JSON、page ID 或完整 API 响应体；失败路径输出完整错误信息，等待用户确认后再处理。目标：降低 context 信噪比，防止 agent 因冗余确认信息失去焦点。
+  2. **(Fix 2) Ratchet Check — 棘轮检查协议（Step 5.5）**：新增 Step 5.5，在每次工作流执行结束后自动触发轻量级自检。满足触发条件（运行异常、用户修正、降级路径）时，起草永久规则并向用户请求确认写入；用户确认后立即更新 CLAUDE.md 或 article_generation.md，并记录本 changelog。无异常时保持沉默。目标：将 failure-driven 规则积累变成系统性机制，而非依赖用户手动触发 Meta-Harness Protocol。
+
+---
+
 ## [2026-04-23]
 - **升级模块**：`CLAUDE.md`, `README.md`, `tags.json`, `notion_upload.py`, `skills/article_generation.md`
 - **变更详情**：

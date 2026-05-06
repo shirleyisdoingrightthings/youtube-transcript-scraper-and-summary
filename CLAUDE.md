@@ -36,6 +36,10 @@
 python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 ```
 
+**输出信号（Output Signal）：**
+- ✅ 成功：仅向用户展示一行简报，格式为 `✅ Step 1 完成 | 标题：{title} | 字幕段数：{N}`，不输出 JSON 原始内容。
+- ❌ 失败：输出完整报错信息 + 建议处理方式，记录至 `logs/fetch_errors.md`，等待用户确认。
+
 ### Step 2：生成 Blog 文章
 
 读取 JSON 中的 `title`、`url`、`transcript` 字段。
@@ -63,6 +67,10 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 4. 将生成的 Markdown 文章保存至该目录下，文件名为 `<视频完整标题>.md`。
 5. 将 Step 1 已保存的临时字幕文件 `transcript_temp.json` 移动到该子目录下，并重命名为 `transcript.json`。
 
+**输出信号（Output Signal）：**
+- ✅ 成功：仅展示 `✅ Step 3 完成 | 已归档至：output/{视频完整标题}/`。
+- ❌ 失败：输出完整错误信息（路径冲突、权限问题等），不自动降级，向用户汇报后等待指令。
+
 ### Step 4：上传 Notion 与同步 Second Brain
 
 文件归档完成后，立即执行双向同步：
@@ -71,12 +79,44 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 ```bash
 python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>"
 ```
+**输出信号：**
+- ✅ 成功：仅展示 `✅ Notion 上传成功`，不输出 page ID 或完整 API 返回体。
+- ❌ 失败：输出完整 API 错误信息 + HTTP 状态码，等待用户确认后再重试或跳过。
+
 2. 将生成的带有标签的 Markdown 文章，复制一份到 Obsidian 第二大脑目录：`/Users/shirleywu/Desktop/Second Brain/YouTube Transcripts/<文件名>.md`。
+
+**输出信号：**
+- ✅ 成功：仅展示 `✅ Obsidian 同步成功`。
+- ❌ 失败：输出完整错误信息（路径不存在、权限不足等），等待用户确认。
 
 ### Step 5：工作流日志与异常处理 (Harness Logging)
 
 1. **异常人为反馈 (Human-in-the-loop)**：如果在抓取字幕（被反爬）、解析或上传过程中发生异常，**请将报错信息与你的解决方案向用户汇报并请求确认，绝对不要在未通知用户的情况下自动降级或盲目重试。**
 2. **记录执行日志**：工作流结束时（无论成功还是发生异常），必须在 `logs/workflow_execution.md` 文件的最顶端（最新的一行）追加一条执行记录，写明时间、处理的视频以及状态。
+
+### Step 5.5：Ratchet Check（棘轮检查）
+
+每次工作流执行结束、Step 5 日志写入完成后，自动检查本次运行是否满足以下任意触发条件：
+
+**触发条件（满足任意一条）：**
+- 本次运行中出现任何错误、异常或非预期行为（无论最终是否恢复成功）
+- 用户在流程中提出了任何修正意见或指出了输出偏差
+- Agent 使用了任何降级路径、替代方案或绕过了某个步骤
+
+**若触发，执行以下步骤：**
+
+1. 用一句话描述本次失败/偏差的具体行为（是什么，在哪一步，导致了什么）。
+2. 起草一条对应的**永久规则**，格式简洁，可直接插入目标文件。
+3. 向用户展示如下提示（不超过 3 行）：
+   > 💡 **Ratchet Check**：本次运行发现「{具体问题}」。
+   > 建议新增规则：「{规则草稿}」
+   > 写入位置：`{CLAUDE.md 或 skills/article_generation.md 的具体段落}`，是否确认？
+4. 用户确认后，立即修改对应文件，并在 `logs/system_changelog.md` 顶端追加一条记录（注明日期、触发原因、新增规则）。
+5. 用户拒绝时，在 `workflow_execution.md` 本次记录末尾追加一行：`Ratchet Check：已提示，用户选择跳过。`
+
+**若本次运行无任何异常或偏差，跳过此步骤，保持沉默。**
+
+---
 
 ### Step 6：系统自检与文档进化 (Meta-Harness Protocol)
 
