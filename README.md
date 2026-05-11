@@ -1,6 +1,6 @@
 # YouTube → Blog | Claude Code 自动化工作流
 
-将任意 YouTube 视频链接转换为结构化中文深度解读文章，并自动归档至 Notion 与 Obsidian。适用于 AI/科技讲座、播客访谈、行业大会演讲等内容类型。
+将任意 YouTube 视频链接转换为结构化中文深度解读文章或对话体逐字稿，并自动归档至 Notion 与 Obsidian。适用于 AI/科技讲座、播客访谈、行业大会演讲等内容类型。
 
 > **环境配置与使用指南** → [PLAYBOOK.md](PLAYBOOK.md)
 
@@ -18,8 +18,8 @@
 在 Claude Code 中打开此目录，发送 YouTube 链接，工作流自动执行以下步骤：
 
 1. **抓取字幕** — 调用 [youtube-transcript.io](https://www.youtube-transcript.io) API 获取带时间戳的完整字幕，同时保存为本地 `transcript.json`
-2. **生成文章** — 按照 `skills/article_generation.md` 中的规范，生成 6 段式中文深度解读（Metadata → TL;DR → 核心观点 → 按主题重构 → 总结与展望 → 参考资源）
-3. **归档文件** — 按视频完整标题建立子目录，保存 Markdown 文章与字幕文件
+2. **意图路由与生成** — 根据用户输入（例如"生成深度文章"或"整理逐字稿"），调用 `skills/article_generation.md` 或 `skills/dialogue_transcript.md` 中的规范，生成对应的 Markdown 输出
+3. **归档文件** — 按系统自动生成的中文标题建立子目录，保存对应的 Markdown 文件（如 `<标题> - 深度文章.md` 或 `<标题> - 逐字稿.md`）与原始字幕数据
 4. **同步 Notion** — 上传文章内容（含封面图、元数据），已有页面自动归档旧版本后重建（幂等）
 5. **同步 Obsidian** — 将带 YAML frontmatter 标签的 Markdown 复制到 Second Brain 目录
 
@@ -34,13 +34,15 @@
 ├── notion_upload.py            # Notion 上传脚本（幂等 upsert）
 ├── tags.json                   # 标签字典（约束分类标签与双链术语的边界）
 ├── skills/
-│   └── article_generation.md  # 文章生成规范（按需加载）
+│   ├── article_generation.md  # 深度解读文章生成规范
+│   └── dialogue_transcript.md # 对话体逐字稿生成规范
 ├── logs/
 │   ├── workflow_execution.md   # 每次执行记录
 │   └── system_changelog.md    # 系统架构变更日志
 ├── output/
-│   └── <视频完整标题>/
-│       ├── <视频完整标题>.md
+│   └── <生成的中文标题>/
+│       ├── <生成的中文标题> - 深度文章.md
+│       ├── <生成的中文标题> - 逐字稿.md
 │       └── transcript.json
 ├── requirements.txt
 ├── .env.example
