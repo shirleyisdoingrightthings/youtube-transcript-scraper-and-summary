@@ -1,3 +1,4 @@
+- **2026-05-12**：优化 `skills/dialogue_transcript.md` 输出结构（移除内容概述和重点关注），合并原重点关注至核心观点，并放开核心观点 3-5 条的上限限制（长访谈可达 8-10 条）；同步在 `skills/article_generation.md` 放开条数限制。
 # System Changelog (Meta-Harness)
 
 > 此日志文件用于记录 `YouTube Transcript Scraper and Summary` 系统框架本身的演进与维护。
