@@ -1,3 +1,4 @@
+- **2026-05-12**：触发 Ratchet Check（Step 5.5），在 `skills/dialogue_transcript.md` 中补充和修正了逐字稿的格式规范：访谈信息统一使用中文冒号，核心观点数字列表标题加粗并提行正文，增加“以下为逐字稿正文：”二级标题，规范说话人标签后的单个空格。
 - **2026-05-12**：优化 `skills/dialogue_transcript.md` 输出结构（移除内容概述和重点关注），合并原重点关注至核心观点，并放开核心观点 3-5 条的上限限制（长访谈可达 8-10 条）；同步在 `skills/article_generation.md` 放开条数限制。
 # System Changelog (Meta-Harness)
 
