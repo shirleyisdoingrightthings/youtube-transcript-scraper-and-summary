@@ -1,3 +1,4 @@
+- **2026-05-13**：成功为 Cursor 演讲视频生成《Cursor｜AI编程的下一时代 - 逐字稿.md》，严格遵循了新增的排版规范（中文冒号、核心观点提行等），已同步至 Notion 与 Obsidian。
 - **2026-05-12**：成功为 Demis Hassabis 访谈生成《Demis Hassabis｜AGI、Agent与下一个科学突破 - 逐字稿.md》，已同步至 Notion 与 Obsidian。
 - **2026-05-12**：根据新规范，重构了 Dylan Patel 访谈逐字稿的导读结构，扩展为 8 条核心观点，并同步覆盖更新了 Notion 和 Obsidian。
 - **2026-05-12**：成功为 Andrej Karpathy 访谈生成《Andrej Karpathy｜为什么连他都说从未感到如此落后：从 Vibe Coding 到 Agentic Engineering - 逐字稿.md》，已同步至 Notion 与 Obsidian。
