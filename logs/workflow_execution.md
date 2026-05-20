@@ -1,3 +1,6 @@
+- **2026-05-19**：成功为 Daniela Amodei 在斯坦福 "View from the Top" 的演讲生成《Daniela Amodei｜以负责任的方式构建 AI - 逐字稿.md》。本次首次应用升级版逐字稿结构（开篇引言 blockquote + 视频价值段 + 简洁嘉宾背景 + 8 条命名化核心观点 + 19 段叙事性章节标题 + 媒体占位符），并启用"翻译质量与受众平衡"与"审稿人自检 Checklist"两项新规范。审稿环节修正 1 处听写错误（Cloud Code → Claude Code），其余 4 项 Checklist 通过。已同步至 Notion 与 Obsidian。
+- **2026-05-17**：成功处理 Jim Fan AIN 大会演讲，生成《Jim Fan｜机器人的 End Game - 从 VLA 到 WAM，NVIDIA 正在用 LLM 的剧本重写具身智能 - 深度文章.md》，采用用户定制格式：深度文章（TL;DR + 核心观点 8 条 + 主题重构）+ 带时间戳逐字稿合为一个文件；嵌入了 Aaron Ames（WIRED）的反向观点作为补充说明；已同步至 Notion 与 Obsidian。
+- **2026-05-15**：完成《Cerebras 百亿 IPO｜推理算力的范式分裂与叙事错位 - 深度文章.md》。本次为非 YouTube 工作流的独立深度解读稿件，输入源为 Stratechery 长文 + SemiAnalysis 付费 newsletter + TechCrunch 新闻 + TBPN 创始人引语，未走 fetch_transcript / transcript.json 归档路径；本地保存与 Obsidian 同步完成；Notion 上传按用户指示走"私人页面（非数据库）"路径。
 - **2026-05-13**：成功为 Cursor 演讲视频生成《Cursor｜AI编程的下一时代 - 逐字稿.md》，严格遵循了新增的排版规范（中文冒号、核心观点提行等），已同步至 Notion 与 Obsidian。
 - **2026-05-12**：成功为 Demis Hassabis 访谈生成《Demis Hassabis｜AGI、Agent与下一个科学突破 - 逐字稿.md》，已同步至 Notion 与 Obsidian。
 - **2026-05-12**：根据新规范，重构了 Dylan Patel 访谈逐字稿的导读结构，扩展为 8 条核心观点，并同步覆盖更新了 Notion 和 Obsidian。
