@@ -246,7 +246,8 @@ def append_blocks(page_id: str, blocks: list) -> None:
 # 防冲突逻辑
 # ───────────────────────────────────────────
 
-TYPE_SUFFIXES = ("—深度文章", "—逐字稿", " - 深度文章", " - 逐字稿")
+# 当前两种产物后缀在前（图文精读 / 逐字稿）；"深度文章"为已退役类型，仅保留识别能力以兼容历史文件
+TYPE_SUFFIXES = ("—图文精读", "—逐字稿", "—深度文章", " - 图文精读", " - 逐字稿", " - 深度文章")
 
 def detect_type_suffix(filename_title: str) -> tuple:
     """
@@ -263,8 +264,8 @@ def detect_type_suffix(filename_title: str) -> tuple:
 
 
 def infer_other_suffix(current_suffix: str) -> str:
-    """推断另一种类型的后缀"""
-    return "—深度文章" if current_suffix == "—逐字稿" else "—逐字稿"
+    """推断另一种类型的后缀（当前体系：图文精读 ↔ 逐字稿）"""
+    return "—逐字稿" if current_suffix == "—图文精读" else "—图文精读"
 
 
 def resolve_dedup(youtube_url: str, base_title: str, current_suffix: str) -> str:
@@ -290,7 +291,11 @@ def resolve_dedup(youtube_url: str, base_title: str, current_suffix: str) -> str
 
     for pid, ptitle in existing_pages:
         # 标准化 Notion 中的旧格式后缀（" - " → "—"）
-        ptitle_normalized = ptitle.replace(" - 深度文章", "—深度文章").replace(" - 逐字稿", "—逐字稿")
+        ptitle_normalized = (
+            ptitle.replace(" - 图文精读", "—图文精读")
+                  .replace(" - 深度文章", "—深度文章")
+                  .replace(" - 逐字稿", "—逐字稿")
+        )
 
         if ptitle_normalized == base_title:
             # 规则 2：已有页面无后缀 → 给它追加后缀
