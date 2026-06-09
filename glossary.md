@@ -30,11 +30,21 @@
 |---|---|
 | JEPA | 全称 **Joint Embedding Predictive Architecture（联合嵌入预测架构）**，注意"预测"二字不可漏 |
 | V-JEPA 2 | 带连字符；全系列（含逐字稿）拉齐为此写法 |
-| VL-JEPA | 带连字符 |
+| VL-JEPA | 带连字符；**全系列锁定此写法，弃用「VLJA」**（早期逐字稿如残留 VLJA 须改） |
 | VLA | 视觉-语言-动作模型（Vision-Language-Action） |
+| 𝝅0.7 / 𝝅 模型 | Physical Intelligence 的机器人模型；**统一用 𝝅0.7（π0.7），弃用「PI-07」** |
 | LeWorld Model | 专名，不译、不加括注「分层世界模型」 |
 | DINO / DINO V3 | |
 | Barlow Twins / VICReg | |
+
+## 三-补、其他易混写法
+
+| 英文 / 概念 | 统一译法 | 说明 |
+|---|---|---|
+| stack | 技术栈 | **统一用「技术栈」，弃用「堆栈」**（堆栈易与数据结构 stack 混淆） |
+| end effector | 末端执行器 | |
+| CEM (cross-entropy method) | 交叉熵方法 | |
+| phenomenological model | 现象学模型 | |
 
 ## 四、人名 / 机构（首次出现写法）
 - Yann LeCun（图灵奖得主）、Demis Hassabis、Benedict Evans
