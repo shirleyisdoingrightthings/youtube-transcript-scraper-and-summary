@@ -23,6 +23,7 @@
 | world model | 世界模型 | |
 | behavioral cloning | 行为克隆 | |
 | hierarchical world model | 分层世界模型 | 与具体实现 `LeWorld Model`（专名，不译）区分开 |
+| steel manning / steel man | 钢人辩护（最强版辩护） | 指替反方构造**最强**论证；**严禁**译作"稻草人"——straw man（稻草人谬误：歪曲对方立场再攻击）是其**反义词** |
 
 ## 三、模型 / 架构名写法（连字符风格统一）
 
