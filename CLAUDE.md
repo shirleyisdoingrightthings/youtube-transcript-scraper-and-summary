@@ -118,7 +118,7 @@ python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>"
 - ✅ 成功：仅展示 `✅ Notion 上传成功`，不输出 page ID 或完整 API 返回体。
 - ❌ 失败：输出完整 API 错误信息 + HTTP 状态码，等待用户确认后再重试或跳过。
 
-2. 将生成的带有标签的 Markdown 文章，复制一份到 Obsidian 第二大脑目录：`/Users/shirleywu/Desktop/Second Brain/YouTube Transcripts/<文件名>.md`。
+2. 将生成的带有标签的 Markdown 文章，复制一份到 Obsidian 第二大脑目录：`/Users/jialiwu/Desktop/Second Brain/YouTube Transcripts/<文件名>.md`。
 
 **输出信号：**
 - ✅ 成功：仅展示 `✅ Obsidian 同步成功`。

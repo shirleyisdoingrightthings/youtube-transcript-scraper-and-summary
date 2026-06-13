@@ -47,7 +47,7 @@ mkdir output
 在 Claude Code 会话中打开此文件夹：
 
 ```bash
-cd "/Users/shirleywu/Desktop/YouTube Transcript Scraper and Summary"
+cd "/Users/jialiwu/Desktop/youtube transcript scraper and summary"
 claude
 ```
 
