@@ -5,3 +5,9 @@ __pycache__/
 *.pyo
 .DS_Store
 logs/
+
+# 本地工具状态 / 临时工作文件（勿提交）
+.claude/
+err.log
+transcript_temp.json
+talk_transcript.json
