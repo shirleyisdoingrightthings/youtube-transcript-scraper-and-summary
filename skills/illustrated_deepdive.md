@@ -46,13 +46,24 @@
 - 优先把读者拉进来（如"你正在用的 X"），从旁观者变利益相关者。
 - 与标题分工互补、不重复：标题给"是谁 + 什么观点"，摘要"加注下重码"。
 
-### 3. 封面图 Recraft Prompt
+### 3. 封面图（两步流程 · Recraft 定风格 → Nano Banana 叠字调细节）
 
-- 固定参数行：`模型 recraftv3｜风格 Motion Blur｜尺寸 2048×1024`。
-- 输出可直接复制的**英文 prompt**，务必含 `no text`（中文标题后期叠加，避免乱码）；纯抽象版另加 `no people`。
-- **系列统一视觉**：同一系列共享构图母题 + 配色 + 风格词，只改一个差异点区分集数。
-  （示例母题：左乱 → 右清晰的横向过渡；deep navy/black 背景 + electric blue 主光 + amber 点缀。）
-- 主选 + 备选各一版（概念抽象版 / 人物剪影版），并提示可调项（冷暖、抽象度）。
+封面走两步，**模式 A / B 通用**（逐字稿也用这套，不必只用原片截图）。**最终成图必须 2048×1024、高清——这是硬性要求。**
+
+**第一步 · Recraft AI 定背景与整体风格（出干净底图，不带文字）**
+- 面板设置：`Style = Motion Blur｜Size = 2048×1024（2:1）`。
+- 输出一段可直接复制的**英文 prompt**，**务必 `no text`**——AI 嵌字必糊，所有文字一律留到第二步叠加。
+- **「十字路口」house style（默认调性）**：暗冷、电影感长曝光 / 动态模糊；teal-black 暗底 + 横向 amber / warm-white 光轨；冷调玻璃与空间纵深；warm amber 点缀；premium、minimal、克制留白。**顶部或中央留出干净暗区**给主题词。人物可有可无（要"一个 leader 对着 agent 面板"就放一个背影 + 几个虚化队友；要纯抽象就 `no people`）。
+- 系列：同一系列共用 house 调性与构图母题，只改一个差异点区分集数。
+- 可复用模板（把 `{概念}` 换成本期视觉概念）：
+  > `A dark, cinematic {概念} in a bold motion-blur, long-exposure style. Teal-black moody scene with horizontal amber and warm-white light trails, cool glass-and-space depth, warm amber accents. Keep clean dark negative space at the top/center for a title to be added later. Premium, minimal, high-end tech-editorial mood. recraft v3, motion blur, 2048x1024. No text, no letters.`
+
+**第二步 · Google AI Studio（Nano Banana 最新模型）叠主题词 + 调细节**
+- **叠主题词**：把本期主题词（如 `Leading AI Native Teams`）放在**顶部或中央**，走 house 字体——**细体 / light-weight 干净无衬线（Helvetica Neue Light 类）、字距拉开、柔白 #F3F8F8 + 微光**，像发光招牌；暗底直接白字，浅底加淡阴影。
+- **调细节（按需）**：把画面里的屏幕换成 **Claude Code 的 CUI / 终端界面**（深色终端 + 彩色代码行，可叠小号等宽 `Claude Code`）；加 **Claude logo（八角星标）**（顶部居中或角落）。
+- **保真要求**：只叠字 / 改指定细节，不动其余画面；保持动态模糊与配色；**导出 2048×1024 高清**。
+
+> 封面铁律：第一步 `no text`、第二步才叠字；字体走 house light-weight 细体；最终 **2048×1024 高清**。
 
 ### 4. 内容与价值概括（双锚点之一）
 
