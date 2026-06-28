@@ -115,18 +115,20 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 4. 根据模式保存文件：
    - **模式 A**：文件名为 `<生成的中文标题> - 图文精读.md`
    - **模式 B**：文件名为 `<生成的中文标题> - 逐字稿.md`
-   - 两种模式的输出存放于同一子目录下，互不覆盖。
-5. 将 Step 1 已保存的临时字幕文件 `transcript_temp.json` 移动到该子目录下，并重命名为 `transcript.json`（若目录中已有 `transcript.json`，则跳过此步）。
+   - **演讲实录（单人演讲 / 现场回闪）**：文件名为 `<生成的中文标题> - 演讲实录.md`
+   - 各形态的输出存放于同一子目录下，互不覆盖。
+5. 将 Step 1 已保存的临时字幕文件 `transcript_temp.json` 移动到该子目录下，并重命名为 `transcript.json`（若目录中已有 `transcript.json`，则跳过此步；**合辑 / 多来源稿**改名为 `transcript_<来源>.json`，如 `transcript_ryolu.json`）。
+6. **生成交接文档（强制 · 三件套之一）**：在该子目录下生成 `交接文档.md`，严格按 `skills/handoff_doc.md` 的固定模板与规范填写。交接文档是给"新对话 / 新 Agent 接续多轮精修"用的**状态快照**（让新 Agent 只读它即可恢复工作记忆、不必回吞整轮生成过程），每篇必出，与「成品.md」「transcript.json」并称**归档三件套**。
 
 **输出信号（Output Signal）：**
-- ✅ 成功：仅展示 `✅ Step 3 完成 | 已归档至：output/{视频完整标题}/`。
+- ✅ 成功：仅展示 `✅ Step 3 完成 | 已归档三件套（成品 + transcript.json + 交接文档）至：output/{标题}/`。
 - ❌ 失败：输出完整错误信息（路径冲突、权限问题等），不自动降级，向用户汇报后等待指令。
 
-### Step 4：上传 Notion 与同步 Second Brain
+### Step 4：上传 Notion
 
-文件归档完成后，立即执行双向同步：
+文件归档完成后，上传 Notion：
 
-1. 运行以下命令将文章上传到 Notion：
+运行以下命令将文章上传到 Notion：
 ```bash
 python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>"
 ```
@@ -136,17 +138,13 @@ python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>"
 - ✅ 成功：仅展示 `✅ Notion 上传成功`，不输出 page ID 或完整 API 返回体。
 - ❌ 失败：输出完整 API 错误信息 + HTTP 状态码，等待用户确认后再重试或跳过。
 
-2. 将生成的带有标签的 Markdown 文章，复制一份到 Obsidian 第二大脑目录：`/Users/jialiwu/Desktop/Second Brain/YouTube Transcripts/<文件名>.md`。
-
-**输出信号：**
-- ✅ 成功：仅展示 `✅ Obsidian 同步成功`。
-- ❌ 失败：输出完整错误信息（路径不存在、权限不足等），等待用户确认。
-
 ### Step 4.5：协作精修与定稿前终审（人在环中）
 
 初稿交付（Notion 链接）后，用户会对照原片提修改意见，进入**多轮协作精修**。**精修固定顺序、外部素材处理、标题钩子规则见 `skills/dialogue_transcript.md` 的「面向发布的多轮精修流程」**：外部素材并入 → 正文（结构 / 合并 / 删减 / 调序）→ 非正文（内容与价值 → 嘉宾背景 → 核心观点 → 写在最后）→ 最后标题 + 钩子；每处改动对照字幕核校。
 
 精修轮数由用户意见驱动、不固定。**定稿前必须再跑一轮 Agent Council 终审**（机制同 Step 2.6，用全新 Agent + 完整正文）：打分 + 核实 + 必改清零 → 输出"可发布"判定与分数。改动需重传 Notion 时遵守 Step 4 的查重规则；读回线上稿用 `python3 notion_read.py <page_id_or_url>`（页面若被移出上传数据库，需在 Notion 重新「连接」集成）。
+
+**交接文档同步铁律（强制）**：**每完成一轮精修、或定稿后，必须同步更新该稿 `output/<标题>/交接文档.md`** 的「当前阶段 / ✅已完成 / ⏳待办」（规范见 `skills/handoff_doc.md`）。改完成品顺手改交接文档——脱钩的交接文档（成品改了、文档没改）会误导接手的新 Agent，比没有更糟。
 
 ### Step 5：工作流日志与异常处理 (Harness Logging)
 

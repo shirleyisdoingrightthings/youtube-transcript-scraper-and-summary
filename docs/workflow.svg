@@ -1,0 +1,90 @@
+<svg width="680" viewBox="0 0 680 668" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>YouTube 转 Blog 工作流设计视图</title>
+<desc>从收到 YouTube 链接到系统自进化的流水线。左侧为流程步骤，按角色着色：灰=输入/归档/日志，紫=生成，青=质量闸门，琥珀=系统进化；右侧灰块为每一步对应的工程模块或文件。</desc>
+<defs>
+<style>
+text{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;fill:#2C2C2A}
+.th{font-size:14px;font-weight:500}
+.ts{font-size:12px;font-weight:400;fill:#56554F}
+.c-gray rect{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:1.5}
+.c-gray .th{fill:#2C2C2A}.c-gray .ts{fill:#5F5E5A}
+.c-purple rect{fill:#EEEDFE;stroke:#534AB7;stroke-width:1.5}
+.c-purple .th{fill:#26215C}.c-purple .ts{fill:#534AB7}
+.c-teal rect{fill:#E1F5EE;stroke:#0F6E56;stroke-width:1.5}
+.c-teal .th{fill:#04342C}.c-teal .ts{fill:#0F6E56}
+.c-amber rect{fill:#FAEEDA;stroke:#854F0B;stroke-width:1.5}
+.c-amber .th{fill:#412402}.c-amber .ts{fill:#854F0B}
+.box{fill:#FBFBFA;stroke:#B4B2A9;stroke-width:1}
+.arr{stroke:#888780;stroke-width:1.5;fill:none}
+.leader{stroke:#B4B2A9;stroke-width:0.8;stroke-dasharray:3 3}
+</style>
+<marker id="ah" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#888780" stroke-width="1.2"/></marker>
+</defs>
+<rect x="0" y="0" width="680" height="668" fill="#FFFFFF"/>
+
+<g class="c-gray"><rect x="40" y="16" width="12" height="12" rx="3"/></g>
+<text class="ts" x="58" y="26">输入/归档/日志</text>
+<g class="c-purple"><rect x="168" y="16" width="12" height="12" rx="3"/></g>
+<text class="ts" x="186" y="26">生成</text>
+<g class="c-teal"><rect x="248" y="16" width="12" height="12" rx="3"/></g>
+<text class="ts" x="266" y="26">质量闸门</text>
+<g class="c-amber"><rect x="378" y="16" width="12" height="12" rx="3"/></g>
+<text class="ts" x="396" y="26">系统进化</text>
+<text class="ts" x="486" y="26">灰块 = 工程模块/文件</text>
+
+<line class="arr" x1="190" y1="98" x2="190" y2="110" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="152" x2="190" y2="164" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="206" x2="190" y2="218" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="260" x2="190" y2="272" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="314" x2="190" y2="326" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="368" x2="190" y2="380" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="422" x2="190" y2="434" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="476" x2="190" y2="488" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="530" x2="190" y2="542" marker-end="url(#ah)"/>
+<line class="arr" x1="190" y1="584" x2="190" y2="596" marker-end="url(#ah)"/>
+
+<line class="leader" x1="340" y1="77" x2="396" y2="77"/>
+<line class="leader" x1="340" y1="131" x2="396" y2="131"/>
+<line class="leader" x1="340" y1="185" x2="396" y2="185"/>
+<line class="leader" x1="340" y1="239" x2="396" y2="239"/>
+<line class="leader" x1="340" y1="293" x2="396" y2="293"/>
+<line class="leader" x1="340" y1="347" x2="396" y2="347"/>
+<line class="leader" x1="340" y1="401" x2="396" y2="401"/>
+<line class="leader" x1="340" y1="455" x2="396" y2="455"/>
+<line class="leader" x1="340" y1="509" x2="396" y2="509"/>
+<line class="leader" x1="340" y1="563" x2="396" y2="563"/>
+<line class="leader" x1="340" y1="617" x2="396" y2="617"/>
+
+<g class="c-gray"><rect x="40" y="56" width="300" height="42" rx="8"/><text class="th" x="56" y="74">用户发来 YouTube 链接</text><text class="ts" x="56" y="90">前置检查 · .env 密钥</text></g>
+<rect class="box" x="396" y="56" width="244" height="42" rx="8"/><text class="ts" x="410" y="81">.env（API 密钥校验）</text>
+
+<g class="c-teal"><rect x="40" y="110" width="300" height="42" rx="8"/><text class="th" x="56" y="128">阶段 -1 选题预判</text><text class="ts" x="56" y="144">闸门 · 略读后四维打分</text></g>
+<rect class="box" x="396" y="110" width="244" height="42" rx="8"/><text class="ts" x="410" y="127">fetch_transcript.py</text><text class="ts" x="410" y="143">topic_assessment.md</text>
+
+<g class="c-gray"><rect x="40" y="164" width="300" height="42" rx="8"/><text class="th" x="56" y="182">Step 1 抓字幕</text><text class="ts" x="56" y="198">闸门 · coverage ≥ 0.9</text></g>
+<rect class="box" x="396" y="164" width="244" height="42" rx="8"/><text class="ts" x="410" y="189">fetch_transcript.py</text>
+
+<g class="c-purple"><rect x="40" y="218" width="300" height="42" rx="8"/><text class="th" x="56" y="236">Step 2 生成内容</text><text class="ts" x="56" y="252">路由 · 精读/逐字稿/演讲实录</text></g>
+<rect class="box" x="396" y="218" width="244" height="42" rx="8"/><text class="ts" x="410" y="235">illustrated_deepdive.md</text><text class="ts" x="410" y="251">dialogue_transcript.md</text>
+
+<g class="c-teal"><rect x="40" y="272" width="300" height="42" rx="8"/><text class="th" x="56" y="290">Step 2.5 对照字幕核校</text><text class="ts" x="56" y="306">事实·数字·专名铁律</text></g>
+<rect class="box" x="396" y="272" width="244" height="42" rx="8"/><text class="ts" x="410" y="297">glossary.md（术语统一）</text>
+
+<g class="c-teal"><rect x="40" y="326" width="300" height="42" rx="8"/><text class="th" x="56" y="344">Step 2.6 Agent Council 自检</text><text class="ts" x="56" y="360">全新评审 + 核实 Agent</text></g>
+<rect class="box" x="396" y="326" width="244" height="42" rx="8"/><text class="ts" x="410" y="351">reader_facing_review.md</text>
+
+<g class="c-gray"><rect x="40" y="380" width="300" height="42" rx="8"/><text class="th" x="56" y="398">Step 3 归档三件套</text><text class="ts" x="56" y="414">成品 + 字幕 + 交接文档</text></g>
+<rect class="box" x="396" y="380" width="244" height="42" rx="8"/><text class="ts" x="410" y="397">handoff_doc.md · tags.json</text><text class="ts" x="410" y="413">→ output/&lt;标题&gt;/</text>
+
+<g class="c-gray"><rect x="40" y="434" width="300" height="42" rx="8"/><text class="th" x="56" y="452">Step 4 上传 Notion</text><text class="ts" x="56" y="468">查重 · 幂等重建</text></g>
+<rect class="box" x="396" y="434" width="244" height="42" rx="8"/><text class="ts" x="410" y="459">notion_upload.py</text>
+
+<g class="c-teal"><rect x="40" y="488" width="300" height="42" rx="8"/><text class="th" x="56" y="506">Step 4.5 精修 + 定稿终审</text><text class="ts" x="56" y="522">Council 终审 · 同步交接文档</text></g>
+<rect class="box" x="396" y="488" width="244" height="42" rx="8"/><text class="ts" x="410" y="505">notion_read.py</text><text class="ts" x="410" y="521">handoff_doc.md</text>
+
+<g class="c-gray"><rect x="40" y="542" width="300" height="42" rx="8"/><text class="th" x="56" y="560">Step 5 / 5.5 日志 + 棘轮检查</text><text class="ts" x="56" y="576">记录 · 失败驱动改进</text></g>
+<rect class="box" x="396" y="542" width="244" height="42" rx="8"/><text class="ts" x="410" y="567">workflow_execution.md</text>
+
+<g class="c-amber"><rect x="40" y="596" width="300" height="42" rx="8"/><text class="th" x="56" y="614">Step 6 系统自检与进化</text><text class="ts" x="56" y="630">触发词 · Meta-Harness</text></g>
+<rect class="box" x="396" y="596" width="244" height="42" rx="8"/><text class="ts" x="410" y="613">CLAUDE.md · skills/</text><text class="ts" x="410" y="629">system_changelog.md</text>
+</svg>

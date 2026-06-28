@@ -11,3 +11,4 @@ logs/
 err.log
 transcript_temp.json
 talk_transcript.json
+transcript_*.json
