@@ -17,3 +17,7 @@ transcript_*.json
 # 待用字幕：进 transcripts_pending/ 后会按视频原标题重命名，
 # 不再匹配上面的 transcript_*.json，必须单独忽略整个目录
 transcripts_pending/
+
+# 播客雷达的本地状态：SQLite 库（二进制、每天增长）、抓取日志、生成的榜单。
+# 全部可由 `python3 radar.py poll` 重建，频道白名单 radar_channels.json 才是要进版本的那份。
+radar_data/

@@ -17,6 +17,7 @@
 
 在 Claude Code 中打开此目录，发送 YouTube 链接，工作流自动执行以下步骤：
 
+0. **播客雷达（可选，手动触发）** — 说「跑雷达」即扫描 20 个 AI 播客频道最近一周/半月的新片，按**相对热度**（本片播放 ÷ 该频道自身基线，跨频道可比）出榜单并给三档编辑筛选；零 API key、零配额（走频道 RSS）
 1. **选题预判** — 先抓字幕略读、四维加权打分，给出"值不值得做"的编辑结论后停住等指令（预判用 `--prefer-free`，不消耗付费源配额）
 2. **抓取字幕** — 调用 [youtube-transcript.io](https://www.youtube-transcript.io) API 获取带时间戳的完整字幕，并做覆盖率校验（不足 90% 自动换源重抓，两源皆残缺则硬失败），保存为本地 `transcript.json`
 3. **意图路由与生成** — 根据用户输入（默认生成**图文精读稿**；含"逐字稿/对话体"等关键词时生成**对话体逐字稿**；单人演讲走**演讲实录**；多信源行业判断走**观察稿**），调用 `skills/` 下对应规范生成 Markdown 输出
@@ -34,6 +35,8 @@
 ├── AGENTS.md                       # → CLAUDE.md 的符号链接（两个入口永不漂移）
 ├── PLAYBOOK.md                     # 操作手册：配置、使用、全流程与自定义
 ├── glossary.md                     # 项目术语对照表（核校时统一译法与写法）
+├── radar.py                        # 播客雷达：监控频道 RSS，按相对热度出候选榜单（手动触发）
+├── radar_channels.json             # 雷达的频道白名单 + 嘉宾名单
 ├── fetch_transcript.py             # 字幕抓取（--output / --prefer-free，内置覆盖率校验）
 ├── notion_upload.py                # Notion 上传脚本（按类型后缀查重，幂等 upsert）
 ├── notion_read.py                  # 读回线上稿（精修时对照用）
@@ -52,7 +55,8 @@
 ├── logs/
 │   ├── workflow_execution.md       # 每次执行记录
 │   └── system_changelog.md         # 系统架构变更日志
-├── transcripts_pending/            # 预判后暂缓的字幕（不进 Git，重抓要花钱）
+├── transcripts_pending/            # 预判后暂缓的字幕 + 同名 .summary.md 导读（不进 Git，重抓要花钱）
+├── radar_data/                     # 雷达的 SQLite 时间序列与历史榜单（不进 Git，可重建）
 ├── output/
 │   └── <生成的中文标题>/
 │       ├── <生成的中文标题> - 图文精读.md

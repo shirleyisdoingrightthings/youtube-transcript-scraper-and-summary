@@ -101,6 +101,7 @@ https://youtu.be/am_oeAoUhew
 | 步骤 | 做什么 | 闸门 / 路由 | 对应模块 |
 |---|---|---|---|
 | 前置检查 | 校验三个 API 密钥 | — | `.env` |
+| **阶段 -2 播客雷达（可选）** | 说「跑雷达」：扫 20 个频道的 RSS，按相对热度出榜单 + 三档编辑筛选 | 手动触发、不挂定时（脚本零 token，解读才花）；标题层筛选、不抓字幕 | `radar.py` + `radar_channels.json` |
 | **阶段 -1 选题预判** | 抓字幕略读 + 四维打分，给结论后**停住等"开始转录"** | 闸门：值不值得投精力做；用 `--prefer-free` 不烧付费配额 | `fetch_transcript.py` + `skills/topic_assessment.md` |
 | **Step 1 抓字幕** | 复用阶段 -1 字幕、校验覆盖率（残缺自动换源重抓） | 闸门：`coverage ≥ 0.9` **且** `coverage_verified` 为 true 才放行 | `fetch_transcript.py` |
 | **Step 2 生成内容** | 按形态写稿 | 路由：图文精读 / 逐字稿 / 演讲实录 / 观察稿 | `skills/illustrated_deepdive.md`、`skills/dialogue_transcript.md`、`skills/observation_commentary.md` |
@@ -134,6 +135,7 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 
 | 层 | 职责 | 模块 |
 |---|---|---|
+| 选题发现层 | 找出值得预判的候选（相对热度雷达） | `radar.py`、`radar_channels.json` |
 | 抓取层 | 拿字幕、保覆盖率 | `fetch_transcript.py` |
 | 生成与质控层 | 写稿 + 核校 + 互审 | `skills/*.md`（6 个规范）+ `glossary.md` |
 | 归档发布层 | 三件套 + 上云 | `output/<标题>/`、`notion_upload.py`、`notion_read.py` |
@@ -161,6 +163,8 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 | `fetch_transcript.py` | 抓取与完整度闸门 | `COVERAGE_THRESHOLD` 阈值、源优先级（`--prefer-free`）|
 | `notion_upload.py` | Notion 映射 + 查重 | `create_page()` 字段对齐你的数据库；`TYPE_NAMES` 登记新产物类型；`CALLOUT_ICONS` 增减 callout 触发 emoji |
 | `check_transcript_edit.py` | 精编稿体检 | `DEFAULT_MIN_GAP` 缺口阈值、`HEDGE_MARKERS` 让步语词表 |
+| `radar.py` | 播客雷达 | `MATURITY_CURVE` 成熟度先验（攒够 3 周数据后应改为按 samples 表拟合）、`BASELINE_MIN_AGE_DAYS` 成熟视频门槛、report 的 `--min-minutes` 短视频阈值 |
+| `radar_channels.json` | 雷达监控范围 | 加频道：`python3 radar.py resolve <handle>` 拿 channel_id 后加一行；`weight` 调排序加权；`guest_watchlist` 加值得盯的嘉宾 |
 | `http_utils.py` | 网络重试策略 | 重试次数、退避基数、哪些状态码值得重试 |
 | `tests/` | 回归测试 | 改完脚本跑 `python3 tests/run_all.py`，新增行为顺手补一条 |
 

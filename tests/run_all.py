@@ -17,6 +17,7 @@ MODULES = [
     "test_notion_dedup",
     "test_markdown_blocks",
     "test_edit_check",
+    "test_radar",
 ]
 
 
