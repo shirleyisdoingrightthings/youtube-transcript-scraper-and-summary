@@ -43,8 +43,35 @@ def _get(url: str):
     return http_utils.get(url, headers=HEADERS, timeout=30, label="notion-read")
 
 
-def _rich_text(arr) -> str:
-    return "".join(x.get("plain_text", "") for x in arr) if arr else ""
+def _rich_text(arr, *, markdown: bool = True) -> str:
+    """还原为 Markdown。默认保留加粗 / 行内代码 / 链接——读回线上稿再落回本地时，
+    只取 plain_text 会把编辑在 Notion 里做的重点标记全部丢掉。"""
+    if not arr:
+        return ""
+    out = []
+    for x in arr:
+        s = x.get("plain_text", "")
+        if not s:
+            continue
+        if markdown:
+            ann = x.get("annotations", {})
+            # 前后空白留在标记外面，否则 **  加粗 ** 在 Markdown 里不生效
+            lead = s[: len(s) - len(s.lstrip())]
+            trail = s[len(s.rstrip()):]
+            core = s.strip()
+            if core:
+                if ann.get("code"):
+                    core = f"`{core}`"
+                if ann.get("bold"):
+                    core = f"**{core}**"
+                if ann.get("italic"):
+                    core = f"*{core}*"
+                href = x.get("href")
+                if href:
+                    core = f"[{core}]({href})"
+            s = lead + core + trail
+        out.append(s)
+    return "".join(out)
 
 
 def _block_text(b: dict) -> str:

@@ -182,8 +182,16 @@ def parse_markdown(content: str) -> tuple[str, list]:
         line = raw.strip()
 
         # ── 空行 ──
+        # 单个空行只是分块，不产生内容；**连续 ≥2 个空行**表示作者想要一段视觉留白，
+        # 在 Notion 里落一个空段落块（Markdown 的普通空行到 Notion 是不留痕的）。
         if not line:
-            i += 1
+            blank_run = 0
+            while i < len(lines) and not lines[i].strip():
+                blank_run += 1
+                i += 1
+            # 文档开头与结尾不留空块，避免首尾出现莫名其妙的空行
+            if blank_run >= 2 and blocks and i < len(lines):
+                blocks.append(paragraph_block(""))
             continue
 
         # ── 围栏代码块（``` 起 ``` 止；封面 Recraft Prompt 就住在这里）──
