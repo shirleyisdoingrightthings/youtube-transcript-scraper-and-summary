@@ -270,9 +270,11 @@ def fetch_duration(vid: str) -> tuple[str, int | None, bool]:
 def cmd_enrich(args) -> int:
     """给窗口内的片子补时长。
 
-    刻意做得很慢：串行 + 随机停顿。这不是性能问题——watch 页没有配额概念，
-    但抓猛了会被 YouTube 静默降级成空壳页（实测 4 线程跑 300 条即触发），
-    而时长写进 DB 后永不重抓，所以慢一次换长期干净的数据是划算的。
+    刻意做得很慢：串行 + 每条停 3~5 秒 + 单轮上限 80 条。这不是性能问题——watch 页
+    没有配额概念，但抓猛了会被 YouTube 静默降级成空壳页（2026-08-11 实测：4 线程跑
+    300 条即触发，且限流会**延续到次日**，让第二天的 RSS 间歇返回假 404，导致
+    20 个频道里只有 7 个拿到当日采样）。时长写进 DB 后永不重抓，慢一次换长期干净的
+    数据是划算的；补不完也没关系，下次 enrich 会接着补。
     """
     conn = connect()
     cutoff = (now_utc() - timedelta(days=args.days)).isoformat()
@@ -474,7 +476,7 @@ def cmd_run(args) -> int:
         return rc
     # enrich 只补报告窗口内的片子；限量 + 礼貌停顿是为了别撞 YouTube 的静默限流
     en = argparse.Namespace(days=args.days + 1, limit=args.enrich_limit,
-                            delay_range=(1.2, 2.8))
+                            delay_range=(3.0, 5.0))
     cmd_enrich(en)
     rp = argparse.Namespace(days=args.days, min_minutes=args.min_minutes,
                             top=args.top, md=args.md)
@@ -492,8 +494,9 @@ def main() -> int:
     sp.add_argument("--min-minutes", type=int, default=20)
     sp.add_argument("--top", type=int, default=0)
     sp.add_argument("--md", help="同时写入 radar_data/reports/ 下的该文件名")
-    sp.add_argument("--enrich-limit", type=int, default=150,
-                    help="本轮最多补几条时长（防限流），0 为不限")
+    sp.add_argument("--enrich-limit", type=int, default=80,
+                    help="本轮最多补几条时长（防限流），0 为不限。80 是实测安全上限，"
+                         "调高会显著提升被 YouTube 静默限流的概率")
     sp.set_defaults(func=cmd_run)
 
     sp = sub.add_parser("resolve", help="把 @handle 解析成 channel_id")
@@ -505,9 +508,10 @@ def main() -> int:
 
     sp = sub.add_parser("enrich", help="给窗口内的片子补时长")
     sp.add_argument("--days", type=int, default=14)
-    sp.add_argument("--limit", type=int, default=0, help="本轮最多补几条，0 为不限")
-    sp.add_argument("--delay-range", type=float, nargs=2, default=(1.2, 2.8),
-                    metavar=("MIN", "MAX"), help="每条之间的随机停顿秒数")
+    sp.add_argument("--limit", type=int, default=80,
+                    help="本轮最多补几条，0 为不限（不建议：一轮抓太多会触发软限流）")
+    sp.add_argument("--delay-range", type=float, nargs=2, default=(3.0, 5.0),
+                    metavar=("MIN", "MAX"), help="每条之间的随机停顿秒数，别调到 3 秒以下")
     sp.set_defaults(func=cmd_enrich)
 
     sp = sub.add_parser("report", help="出榜单")
