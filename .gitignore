@@ -21,3 +21,9 @@ transcripts_pending/
 # 播客雷达的本地状态：SQLite 库（二进制、每天增长）、抓取日志、生成的榜单。
 # 全部可由 `python3 radar.py poll` 重建，频道白名单 radar_channels.json 才是要进版本的那份。
 radar_data/
+
+# 手绘图字体：全量 TTF 13 MB，不进版本库；需要时按 assets/fonts/README 重新下载。
+# 子集化产物是每张图临时生成的，也不留。
+assets/fonts/*.ttf
+assets/fonts/.venv/
+assets/fonts/*-subset.woff2

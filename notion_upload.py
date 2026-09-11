@@ -18,12 +18,23 @@ load_dotenv()
 
 NOTION_API_KEY = os.environ.get("NOTION_API_KEY", "")
 NOTION_VERSION = "2022-06-28"
+# 文件上传（File Upload API）与引用 file_upload 的块，2022-06-28 那版根本没有，
+# 必须用新版本号。只在这三处请求上用它，数据库查重 / 建页仍走旧版本——
+# 2025-09-03 起 database 改成了 data source 语义，全局升版会连带打断查重。
+NOTION_UPLOAD_VERSION = "2026-03-11"
+FILE_UPLOAD_MAX_BYTES = 20 * 1024 * 1024      # 单文件上限 20 MB
 DATABASE_ID    = os.environ.get("NOTION_DATABASE_ID", "")
 
 HEADERS = {
     "Authorization":  f"Bearer {NOTION_API_KEY}",
     "Content-Type":   "application/json",
     "Notion-Version": NOTION_VERSION,
+}
+
+UPLOAD_HEADERS = {
+    "Authorization":  f"Bearer {NOTION_API_KEY}",
+    "Content-Type":   "application/json",
+    "Notion-Version": NOTION_UPLOAD_VERSION,
 }
 
 
@@ -104,6 +115,28 @@ def image_block(url: str) -> dict:
             "image": {"type": "external", "external": {"url": url}}}
 
 
+def uploaded_image_block(file_upload_id: str) -> dict:
+    """引用已上传到 Notion 的文件。图由 Notion 自己托管，不需要图床。"""
+    return {"object": "block", "type": "image",
+            "image": {"type": "file_upload", "file_upload": {"id": file_upload_id}}}
+
+
+# 解析阶段先占位、不联网：本地图片的上传统一放到 resolve_local_images() 里做，
+# 这样 parse_markdown() 保持纯函数，测试不用起网络。
+LOCAL_IMAGE_TYPE = "_local_image"
+
+
+def local_image_placeholder(path: str, alt: str) -> dict:
+    return {"object": "block", "type": "image",
+            "image": {"type": LOCAL_IMAGE_TYPE,
+                      LOCAL_IMAGE_TYPE: {"path": path, "alt": alt}}}
+
+
+def is_local_image(block: dict) -> bool:
+    return (block.get("type") == "image"
+            and block.get("image", {}).get("type") == LOCAL_IMAGE_TYPE)
+
+
 # Notion code block 只认固定的语言枚举，不在表里的一律降级为 plain text
 CODE_LANGUAGES = {
     "python", "javascript", "typescript", "bash", "shell", "json", "yaml",
@@ -145,6 +178,32 @@ def quote_block(text: str) -> dict:
 #   💡 说人话保底句
 #   🔍 名词解释灰框（reader_facing_review 的编者增补，必须与嘉宾原话区分开）
 CALLOUT_ICONS = ("📍", "💡", "🔍")
+
+
+def table_block(rows: list, has_column_header: bool = True) -> dict:
+    """Markdown 表格 → Notion table 块。
+
+    rows 是二维字符串数组（已剔除 |---|---| 分隔行）。Notion 要求每行单元格数
+    与 table_width 一致，短行补空、长行截断，否则整块会被 API 拒掉。
+    """
+    width = max(len(r) for r in rows)
+    children = []
+    for r in rows:
+        cells = [rich_text(c) for c in r[:width]]
+        cells += [[] for _ in range(width - len(cells))]
+        children.append({
+            "object": "block", "type": "table_row",
+            "table_row": {"cells": cells},
+        })
+    return {
+        "object": "block", "type": "table",
+        "table": {
+            "table_width": width,
+            "has_column_header": has_column_header,
+            "has_row_header": False,
+            "children": children,
+        },
+    }
 
 
 def _split_callout(line: str) -> tuple:
@@ -194,6 +253,18 @@ def parse_markdown(content: str) -> tuple[str, list]:
                 blocks.append(paragraph_block(""))
             continue
 
+        # ── Markdown 表格（连续的 | 行；分隔行 |---|---| 丢弃）──
+        if line.startswith("|") and line.endswith("|"):
+            rows = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                cur = lines[i].strip().strip("|")
+                if not re.fullmatch(r"[\s:\-|]+", cur):
+                    rows.append([c.strip() for c in cur.split("|")])
+                i += 1
+            if rows:
+                blocks.append(table_block(rows))
+            continue
+
         # ── 围栏代码块（``` 起 ``` 止；封面 Recraft Prompt 就住在这里）──
         if line.startswith("```"):
             lang = line[3:].strip()
@@ -230,8 +301,9 @@ def parse_markdown(content: str) -> tuple[str, list]:
             if src.startswith(("http://", "https://")):
                 blocks.append(image_block(src))
             else:
-                # 本地路径 / 占位路径塞给 Notion 会 400，降级成一行提示文字
-                blocks.append(paragraph_block(f"🖼️ [待补图片：{alt or src}]"))
+                # 本地路径先占位，稍后由 resolve_local_images() 上传成 file_upload；
+                # 上传不成或文件不存在时再降级成一行提示文字。
+                blocks.append(local_image_placeholder(src, alt))
 
         # ── H1 ──
         elif re.match(r"^#\s+", line):
@@ -348,13 +420,105 @@ def create_page(title: str, youtube_url: str) -> str:
     return resp.json()["id"]
 
 
+# ───────────────────────────────────────────
+# 本地图片 → Notion File Upload
+# ───────────────────────────────────────────
+
+MIME_BY_EXT = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".gif": "image/gif", ".webp": "image/webp", ".svg": "image/svg+xml",
+}
+
+# 同一次运行里同一张图只传一次（正文里同图多处引用很常见）
+_upload_cache: dict[str, str] = {}
+
+
+def upload_local_file(path: str) -> str:
+    """把本地文件传给 Notion，返回 file_upload id。失败抛异常，由调用方降级。
+
+    三步：建 file_upload 对象 → 把字节 POST 到 send 端点 → 拿 id 去引用。
+    id 有效期 1 小时，必须在这段时间内挂到块上，所以上传放在建页之后、贴块之前。
+    """
+    real = os.path.abspath(path)
+    if real in _upload_cache:
+        return _upload_cache[real]
+
+    size = os.path.getsize(real)
+    if size > FILE_UPLOAD_MAX_BYTES:
+        raise RuntimeError(f"文件 {size // 1024 // 1024} MB，超过单文件 20 MB 上限")
+
+    name = os.path.basename(real)
+    mime = MIME_BY_EXT.get(os.path.splitext(name)[1].lower(), "application/octet-stream")
+
+    resp = http_utils.post(
+        "https://api.notion.com/v1/file_uploads",
+        headers=UPLOAD_HEADERS, json={}, timeout=30, label="file_upload.create",
+    )
+    if not resp.ok:
+        raise RuntimeError(f"创建 file_upload 失败: {resp.status_code} {resp.text}")
+    obj = resp.json()
+    upload_id = obj["id"]
+
+    # send 端点是 multipart，不能带 Content-Type: application/json，
+    # 也不能自己拼 boundary——交给 requests 的 files= 去生成。
+    send_headers = {k: v for k, v in UPLOAD_HEADERS.items() if k != "Content-Type"}
+    with open(real, "rb") as fh:
+        payload = fh.read()      # 读进内存再发：文件句柄发完就到 EOF，重试会传出 0 字节
+    resp = http_utils.post(
+        obj.get("upload_url") or f"https://api.notion.com/v1/file_uploads/{upload_id}/send",
+        headers=send_headers, files={"file": (name, payload, mime)},
+        timeout=60, label="file_upload.send",
+    )
+    if not resp.ok:
+        raise RuntimeError(f"上传文件内容失败: {resp.status_code} {resp.text}")
+
+    _upload_cache[real] = upload_id
+    return upload_id
+
+
+def resolve_local_images(blocks: list, base_dir: str, uploader=None) -> list:
+    """把解析阶段留下的本地图片占位块换成真正的 file_upload 引用。
+
+    找不到文件、或上传失败，都降级成一行提示文字——**绝不把占位块原样发出去**，
+    那种块 Notion 不认，整批 95 个块会一起 400。
+    """
+    up = uploader or upload_local_file
+    out = []
+    for b in blocks:
+        if not is_local_image(b):
+            out.append(b)
+            continue
+        info = b["image"][LOCAL_IMAGE_TYPE]
+        src, alt = info["path"], info.get("alt", "")
+        full = src if os.path.isabs(src) else os.path.join(base_dir, src)
+        if not os.path.isfile(full):
+            print(f"⚠️  图片不存在，降级成占位文字：{src}")
+            out.append(paragraph_block(f"🖼️ [待补图片：{alt or src}]"))
+            continue
+        try:
+            out.append(uploaded_image_block(up(full)))
+            print(f"  ↑ 已上传 {os.path.basename(full)}")
+        except Exception as e:                      # noqa: BLE001 —— 上传失败不该拖垮整篇
+            print(f"⚠️  上传失败，降级成占位文字：{src}（{e}）")
+            out.append(paragraph_block(f"🖼️ [待补图片：{alt or src}]"))
+    return out
+
+
+def has_uploaded_image(blocks: list) -> bool:
+    return any(b.get("type") == "image"
+               and b.get("image", {}).get("type") == "file_upload" for b in blocks)
+
+
 def append_blocks(page_id: str, blocks: list) -> None:
     """分批上传 blocks（每批最多 95 个）。失败抛异常，交给调用方收拾空页。"""
     for i in range(0, len(blocks), 95):
         chunk = blocks[i: i + 95]
+        # 引用 file_upload 的块旧版本号不认，这一批就换新版本发；
+        # 其余批次维持 2022-06-28，避免升版牵动查重与建页。
+        headers = UPLOAD_HEADERS if has_uploaded_image(chunk) else HEADERS
         resp = http_utils.patch(
             f"https://api.notion.com/v1/blocks/{page_id}/children",
-            headers=HEADERS, json={"children": chunk}, timeout=30,
+            headers=headers, json={"children": chunk}, timeout=30,
         )
         if not resp.ok:
             raise RuntimeError(f"上传 blocks 失败: {resp.status_code} {resp.text}")
@@ -447,6 +611,7 @@ def main():
         content = f.read()
 
     _, blocks = parse_markdown(content)
+    blocks = resolve_local_images(blocks, os.path.dirname(os.path.abspath(md_path)))
 
     # 从文件名提取标题与类型
     basename = os.path.basename(md_path)

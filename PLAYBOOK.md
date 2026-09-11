@@ -106,7 +106,7 @@ https://youtu.be/am_oeAoUhew
 | **Step 1 抓字幕** | 复用阶段 -1 字幕、校验覆盖率（残缺自动换源重抓） | 闸门：`coverage ≥ 0.9` **且** `coverage_verified` 为 true 才放行 | `fetch_transcript.py` |
 | **Step 2 生成内容** | 按形态写稿 | 路由：图文精读 / 逐字稿 / 演讲实录 / 观察稿 | `skills/illustrated_deepdive.md`、`skills/dialogue_transcript.md`、`skills/observation_commentary.md` |
 | **Step 2.5 对照字幕核校** | 逐项核对事实/数字/专名/因果（工作流灵魂） | 专名铁律：先查证、拿不准标 ⚠️、绝不臆造；带时间戳的成品先跑机检 | `glossary.md`、`check_transcript_edit.py` |
-| **Step 2.6 Agent Council 自检** | 全新评审 Agent 打分 → 全新核实 Agent 复核 → 主模型清硬伤 | 闸门：必改硬伤清零 | `skills/reader_facing_review.md` |
+| **Step 2.6 Agent Council 自检** | 激进 + 保守两位全新审稿人并行打分 → 全新 Judge 裁决 → 主模型按裁决清硬伤 | 闸门：必改硬伤清零 | `skills/reader_facing_review.md`、`skills/council/` |
 | **Step 3 归档三件套** | 建中文标题目录，落地成品 + 字幕 + 交接文档 | — | `skills/handoff_doc.md`、`output/<标题>/` |
 | **Step 4 上传 Notion** | 上传（重传查重、每类型只留一页、幂等） | — | `notion_upload.py` |
 | **Step 4.5 精修 + 定稿终审** | 多轮人机精修 + 定稿前再跑 Council；每轮同步更新交接文档 | 闸门：输出"可发布"判定 | `notion_read.py`、`reader_facing_review.md`、`handoff_doc.md` |

@@ -14,8 +14,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 MODULES = [
     "test_http_retry",
     "test_fetch_coverage",
+    "test_fetch_language_guard",
     "test_notion_dedup",
     "test_markdown_blocks",
+    "test_notion_images",
     "test_edit_check",
     "test_radar",
 ]

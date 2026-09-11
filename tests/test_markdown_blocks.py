@@ -62,13 +62,15 @@ def test_block_conversion():
           and "```" not in _flat(code[0]) and code[0]["code"]["language"] == "plain text",
           "围栏代码块 → Notion code block，反引号不上墙", types)
 
-    imgs = [b for b in blocks if b["type"] == "image"]
-    check(len(imgs) == 1 and imgs[0]["image"]["external"]["url"].startswith("https://img.youtube.com"),
-          "http(s) 图片 → image block")
+    ext = [b for b in blocks if b["type"] == "image" and b["image"]["type"] == "external"]
+    check(len(ext) == 1 and ext[0]["image"]["external"]["url"].startswith("https://img.youtube.com"),
+          "http(s) 图片 → external image block")
 
-    local = [_flat(b) for b in blocks if b["type"] == "paragraph" and "待补图片" in _flat(b)]
-    check(local == ["🖼️ [待补图片：本地占位]"],
-          "本地路径图片 → 降级成提示文字（塞给 Notion 会 400）", local)
+    # 本地路径不再当场降级：先留内部占位块，由 resolve_local_images() 上传成
+    # file_upload，传不成再降级。详见 tests/test_notion_images.py。
+    local = [b for b in blocks if nu.is_local_image(b)]
+    check(len(local) == 1 and local[0]["image"][nu.LOCAL_IMAGE_TYPE]["path"] == "./cover.png",
+          "本地路径图片 → 留成内部占位块，等待上传", local)
 
     body = [b for b in blocks if b["type"] == "paragraph" and "Agent" in _flat(b)][0]
     text = _flat(body)
@@ -86,8 +88,21 @@ def test_block_conversion():
     check(urls == ["https://example.com/docs"] and "https://" not in _flat(link),
           "行内链接 → 真链接，URL 不再裸露在正文", urls)
 
-    rows = [_flat(b) for b in blocks if b["type"] == "paragraph" and _flat(b).startswith("|")]
-    check(len(rows) == 3, "表格行各自成段、不再被空格粘成一坨", rows)
+    # 表格：Markdown 表格要变成 Notion 原生 table 块，而不是一堆带竖线的段落。
+    # （旧行为是「每行各自成段」，2026-09-02 升级为真表格）
+    leftover = [_flat(b) for b in blocks if b["type"] == "paragraph" and _flat(b).startswith("|")]
+    check(not leftover, "表格不再退化成带竖线的段落", leftover)
+    tables = [b for b in blocks if b["type"] == "table"]
+    check(len(tables) == 1, "Markdown 表格 → 一个 Notion table 块", len(tables))
+    tb = tables[0]["table"]
+    check(tb["has_column_header"] is True, "首行识别为表头")
+    cells = [[(c[0]["text"]["content"] if c else "") for c in r["table_row"]["cells"]]
+             for r in tb["children"]]
+    check(all(len(r) == tb["table_width"] for r in cells),
+          "每行单元格数补齐到 table_width（缺列补空，否则 API 整块拒收）", cells)
+    check("|" not in "".join("".join(r) for r in cells), "单元格里不残留竖线", cells)
+    check(len(cells) == 2 and cells[0] == ["维度", "分数"] and cells[1] == ["传播度", "8"],
+          "分隔行 |---|---| 被丢弃，表头与数据行都保留", cells)
 
 
 def test_callouts():

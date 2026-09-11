@@ -115,6 +115,32 @@ def find_gaps(stamps: list, segments: list, duration: int | None,
     return gaps
 
 
+def sentence_rhythm(text: str) -> dict:
+    """句长节奏统计（借鉴 shuorenhua「节奏单调」与 Humanizer-zh「连续三句同长」）。
+
+    AI 文本的句长比人写的均匀得多，读起来"平、没有呼吸感"。这里只报数、不判分：
+    变异系数（标准差 / 均值）越低越平；三连同长是更直观的局部信号。
+    """
+    body = []
+    for line in text.split("\n"):
+        s = line.strip()
+        if not s or s[0] in "#>-|`" or s.startswith(("🖼", "🎞", "📊", "👩", "🧑", "📍", "💡", "🎙", "👤", "**")):
+            continue
+        body.append(re.sub(r"\[\d{1,2}:\d{2}(?::\d{2})?\]", "", s))
+    lens = [len(re.findall(r"[\u4e00-\u9fff]", s))
+            for s in re.split(r"[。！？]", "\n".join(body)) if len(s.strip()) > 4]
+    lens = [n for n in lens if n >= 5]
+    if len(lens) < 10:
+        return {}
+    mean = sum(lens) / len(lens)
+    var = sum((n - mean) ** 2 for n in lens) / len(lens)
+    sd = var ** 0.5
+    runs = sum(1 for i in range(len(lens) - 2)
+               if max(lens[i:i + 3]) - min(lens[i:i + 3]) <= 0.15 * (sum(lens[i:i + 3]) / 3))
+    return {"sentences": len(lens), "mean": round(mean, 1),
+            "sd": round(sd, 1), "cv": round(sd / mean, 2), "flat_runs": runs}
+
+
 def locate_transcript(md_path: str) -> str | None:
     """成品与 transcript.json 同属归档三件套，默认在同目录找。"""
     folder = os.path.dirname(os.path.abspath(md_path))
@@ -195,7 +221,17 @@ def main() -> int:
         return 1
 
     with open(md_path, encoding="utf-8") as f:
-        stamps = parse_timestamps(f.read())
+        md_text = f.read()
+    stamps = parse_timestamps(md_text)
+
+    rhythm = sentence_rhythm(md_text)
+    if rhythm and not as_json:
+        flag = "  ⚠️ 偏平，考虑长短句交替" if rhythm["cv"] < 0.40 else ""
+        print(f"📐 句长节奏：{rhythm['sentences']} 句｜均值 {rhythm['mean']} 字｜"
+              f"变异系数 {rhythm['cv']}{flag}")
+        if rhythm["flat_runs"]:
+            print(f"   连续三句长度相近 {rhythm['flat_runs']} 处（打断其中一句即可）")
+        print()
 
     if not stamps:
         print("ℹ️  成品里没有时间戳（图文精读稿等形态不带时间戳），无需扫描。")
@@ -224,6 +260,7 @@ def main() -> int:
             "reversals": reversals,
             "gaps": gaps,
             "min_gap_seconds": min_gap,
+            "rhythm": rhythm,
         }, ensure_ascii=False, indent=2))
     else:
         report(md_path, gaps, reversals, stamps, min_gap, transcript_path)

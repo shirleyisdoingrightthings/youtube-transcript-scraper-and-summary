@@ -12,6 +12,14 @@ Output: JSON with video_id, url, title, transcript, duration_seconds,
   拿不到视频时长时（覆盖率算不出来）不当成通过：输出 coverage_verified=false
   与 warning 字段并在 stderr 告警，由人工确认。
 
+语种校验（防止付费源把非英文轨道错标成 en 静默放行）：
+  实例教训：youtube-transcript.io 曾把某视频的阿拉伯语自动翻译轨标成 en 返回，
+  覆盖率算出来完全达标（因为内容确实完整，只是文种不对），下游拿到的是一份
+  看起来正常、实际不能用的"英文"字幕。付费源返回多条轨道时优先选 languageCode
+  以 en 开头的；不管选中哪条，抓到文本后都做一次拉丁字母占比抽检，占比过低则
+  判定该源本次抓取失败（抛异常），交上层按"这一源失败，换下一源"的既有逻辑处理，
+  不静默放行。
+
 --prefer-free：
   免费源优先，覆盖率达标就收工、完全不碰付费源。付费源免费额度仅 20 视频/月，
   而选题预判每条链接都要抓一次字幕，用这个开关跑预判可以把配额留给真正要做的稿子。
@@ -33,6 +41,25 @@ API_AUTH = f"Basic {_token}" if _token else ""
 
 # 覆盖率阈值：字幕末段时间戳须 ≥ 视频时长的 90%，否则判定为残缺
 COVERAGE_THRESHOLD = 0.90
+
+# 语种校验阈值：文本开头样本里，拉丁字母占全部字母字符的比例须 ≥ 此值，
+# 否则判定"标注语种与实际内容不符"（防止如阿拉伯语轨被误标成 en 静默放行）。
+LATIN_RATIO_THRESHOLD = 0.60
+
+
+def _latin_ratio(text: str, sample_chars: int = 2000) -> typing.Optional[float]:
+    """粗略估计文本样本是否为拉丁字母文字（英文及多数西欧语言）。
+
+    忽略 [MM:SS] 时间戳、空白与标点，只统计字母字符里拉丁字母的占比。
+    样本里字母太少（<50 个）时无法判断，返回 None，交调用方按"无法校验"处理，
+    不当成通过也不当成失败。
+    """
+    sample = re.sub(r"\[\d+:\d+(?::\d+)?\]", "", text[:sample_chars])
+    letters = [c for c in sample if c.isalpha()]
+    if len(letters) < 50:
+        return None
+    latin = sum(1 for c in letters if "a" <= c.lower() <= "z")
+    return latin / len(letters)
 
 
 def extract_video_id(url: str) -> typing.Optional[str]:
@@ -129,8 +156,16 @@ def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int]]:
 
     transcript = ""
     if isinstance(item, dict):
-        if item.get("tracks"):
-            track = item["tracks"][0]
+        tracks = item.get("tracks") or []
+        if tracks:
+            # 多条轨道时优先选 languageCode 以 en 开头的；没有可用的语种字段时
+            # 保持原有行为，直接取第一条——真正的安全网是下面的拉丁字母占比检查，
+            # 不依赖这里的元数据是否可靠。
+            def _is_en(t: dict) -> bool:
+                lang = t.get("language") or t.get("languageCode") or t.get("lang") or ""
+                return str(lang).lower().startswith("en")
+
+            track = next((t for t in tracks if _is_en(t)), tracks[0])
             segs = track.get("transcript")
             if isinstance(segs, list):
                 lines = []
@@ -144,6 +179,14 @@ def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int]]:
                 if item.get(key):
                     transcript = item[key]
                     break
+
+    if transcript:
+        ratio = _latin_ratio(transcript)
+        if ratio is not None and ratio < LATIN_RATIO_THRESHOLD:
+            raise RuntimeError(
+                f"疑似语种错标：轨道标注为英文但拉丁字母占比仅 {ratio:.0%}"
+                "（可能是非英文自动翻译轨被误标成 en 返回），已判定该源本次抓取失败"
+            )
     return transcript, duration
 
 

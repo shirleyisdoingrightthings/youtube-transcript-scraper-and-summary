@@ -21,7 +21,7 @@
 1. **选题预判** — 先抓字幕略读、四维加权打分，给出"值不值得做"的编辑结论后停住等指令（预判用 `--prefer-free`，不消耗付费源配额）
 2. **抓取字幕** — 调用 [youtube-transcript.io](https://www.youtube-transcript.io) API 获取带时间戳的完整字幕，并做覆盖率校验（不足 90% 自动换源重抓，两源皆残缺则硬失败），保存为本地 `transcript.json`
 3. **意图路由与生成** — 根据用户输入（默认生成**图文精读稿**；含"逐字稿/对话体"等关键词时生成**对话体逐字稿**；单人演讲走**演讲实录**；多信源行业判断走**观察稿**），调用 `skills/` 下对应规范生成 Markdown 输出
-4. **对照字幕核校 + Agent Council 自检** — 生成后、归档前，逐板块对照 `transcript.json` 核对事实/数字/专名/因果，对照 `glossary.md` 统一术语；再由全新评审 + 核实 Agent 互审清掉硬伤
+4. **对照字幕核校 + Agent Council 自检** — 生成后、归档前，逐板块对照 `transcript.json` 核对事实/数字/专名/因果，对照 `glossary.md` 统一术语；再由激进 + 保守两位全新审稿人并行打分、全新 Judge 裁决冲突，清掉硬伤
 5. **归档三件套** — 按系统生成的中文标题建立子目录，保存成品 Markdown、原始字幕与交接文档
 6. **同步 Notion** — 上传文章内容（含封面图、元数据），同类型页面自动归档旧版本后重建（幂等）
 
@@ -47,7 +47,8 @@
 │   ├── illustrated_deepdive.md     # 图文精读稿生成规范（默认产物）
 │   ├── dialogue_transcript.md      # 对话体逐字稿 / 演讲实录生成规范
 │   ├── observation_commentary.md   # 观察 / 观点稿生成规范（多信源）
-│   ├── reader_facing_review.md     # 复核清单 + Agent Council 终审协议
+│   ├── reader_facing_review.md     # 复核清单 + Agent Council 三角色协议
+│   ├── council/                    # Council 三角色 prompt 模板（progressive / conservative / judge）
 │   └── handoff_doc.md              # 交接文档模板与更新铁律
 ├── tests/                          # 回归测试（python3 tests/run_all.py）
 ├── docs/
