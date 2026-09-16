@@ -102,16 +102,16 @@ https://youtu.be/am_oeAoUhew
 |---|---|---|---|
 | 前置检查 | 校验三个 API 密钥 | — | `.env` |
 | **阶段 -2 播客雷达（可选）** | 说「跑雷达」：扫 20 个频道的 RSS，按相对热度出榜单 + 三档编辑筛选 | 手动触发、不挂定时（脚本零 token，解读才花）；标题层筛选、不抓字幕 | `radar.py` + `radar_channels.json` |
-| **阶段 -1 选题预判** | 抓字幕略读 + 四维打分，给结论后**停住等"开始转录"** | 闸门：值不值得投精力做；用 `--prefer-free` 不烧付费配额 | `fetch_transcript.py` + `skills/topic_assessment.md` |
+| **阶段 -1 选题预判** | 抓字幕略读 + 四维打分，给结论后**停住等"开始转录"** | 闸门：值不值得投精力做；用 `--prefer-free` 不烧付费配额 | `fetch_transcript.py` + `skills/topic_assessment.md`（批量时 + `skills/transcript_files.md`） |
 | **Step 1 抓字幕** | 复用阶段 -1 字幕、校验覆盖率（残缺自动换源重抓） | 闸门：`coverage ≥ 0.9` **且** `coverage_verified` 为 true 才放行 | `fetch_transcript.py` |
 | **Step 2 生成内容** | 按形态写稿 | 路由：图文精读 / 逐字稿 / 演讲实录 / 观察稿 | `skills/illustrated_deepdive.md`、`skills/dialogue_transcript.md`、`skills/observation_commentary.md` |
-| **Step 2.5 对照字幕核校** | 逐项核对事实/数字/专名/因果（工作流灵魂） | 专名铁律：先查证、拿不准标 ⚠️、绝不臆造；带时间戳的成品先跑机检 | `glossary.md`、`check_transcript_edit.py` |
+| **Step 2.5 对照字幕核校** | 逐项核对事实/数字/专名/因果（工作流灵魂） | 专名铁律：先查证、拿不准标 ⚠️、绝不臆造；带时间戳的成品先跑机检 | `skills/proper_noun_check.md`、`glossary.md`、`check_transcript_edit.py` |
 | **Step 2.6 Agent Council 自检** | 激进 + 保守两位全新审稿人并行打分 → 全新 Judge 裁决 → 主模型按裁决清硬伤 | 闸门：必改硬伤清零 | `skills/reader_facing_review.md`、`skills/council/` |
 | **Step 3 归档三件套** | 建中文标题目录，落地成品 + 字幕 + 交接文档 | — | `skills/handoff_doc.md`、`output/<标题>/` |
-| **Step 4 上传 Notion** | 上传（重传查重、每类型只留一页、幂等） | — | `notion_upload.py` |
+| **Step 4 上传 Notion** | 上传（重传查重、每类型只留一页、幂等）后读回核对 | 闸门：读回比对不一致不报成功 | `notion_upload.py`、`notion_read.py`、`skills/notion_publish.md` |
 | **Step 4.5 精修 + 定稿终审** | 多轮人机精修 + 定稿前再跑 Council；每轮同步更新交接文档 | 闸门：输出"可发布"判定 | `notion_read.py`、`reader_facing_review.md`、`handoff_doc.md` |
-| **Step 5 / 5.5 日志 + 棘轮** | 记录执行；有异常/偏差则提报永久规则 | 失败驱动改进 | `logs/workflow_execution.md`、`logs/system_changelog.md` |
-| **Step 6 系统自检与进化** | 盘点本轮改动、更新核心文档 | 触发词驱动（Meta-Harness） | `CLAUDE.md`、`skills/`、`logs/system_changelog.md` |
+| **Step 5 / 5.5 日志 + 棘轮** | 记录执行；有异常/偏差则提报永久规则 | 失败驱动改进 | `skills/meta_harness.md`、`logs/workflow_execution.md`、`logs/system_changelog.md` |
+| **Step 6 系统自检与进化** | 盘点本轮改动、更新核心文档 | 触发词驱动（Meta-Harness） | `skills/meta_harness.md`、`CLAUDE.md`、`skills/`、`logs/system_changelog.md` |
 
 > 设计视图（流程步骤按角色着色、右侧映射到工程模块的流水线图）见 → [docs/workflow.svg](docs/workflow.svg)。
 
@@ -137,7 +137,7 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 |---|---|---|
 | 选题发现层 | 找出值得预判的候选（相对热度雷达） | `radar.py`、`radar_channels.json` |
 | 抓取层 | 拿字幕、保覆盖率 | `fetch_transcript.py` |
-| 生成与质控层 | 写稿 + 核校 + 互审 | `skills/*.md`（6 个规范）+ `glossary.md` |
+| 生成与质控层 | 写稿 + 核校 + 互审 | `skills/*.md`（生成、核校、发布、自进化各规范）+ `glossary.md` |
 | 归档发布层 | 三件套 + 上云 | `output/<标题>/`、`notion_upload.py`、`notion_read.py` |
 | 自进化层 | 记录 + 棘轮 + 进化 | `logs/*.md`、`system_changelog.md` |
 
@@ -159,6 +159,10 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 | `skills/observation_commentary.md` | 观察 / 观点稿规范 | 中心判断线、多信源编织、冷峻严肃的语体 |
 | `skills/reader_facing_review.md` | 复核 + Agent Council 协议 | 互审机制、复核清单 |
 | `skills/handoff_doc.md` | 交接文档模板 | 交接文档区块、更新铁律 |
+| `skills/transcript_files.md` | 字幕文件命名与存放 | 批量预判命名、pending 目录、summary 导读 |
+| `skills/proper_noun_check.md` | 专名核对铁律 | 五条判据、双源参照 |
+| `skills/notion_publish.md` | Notion 上传细则 | 查重、本地图片、人工处理的 ⚠️、链接变化 |
+| `skills/meta_harness.md` | 棘轮检查 + 系统自检 | Ratchet Check 流程、Step 6 清单 |
 | `glossary.md` | 术语对照表 | 统一译法/写法（跨篇、跨系列上下集） |
 | `fetch_transcript.py` | 抓取与完整度闸门 | `COVERAGE_THRESHOLD` 阈值、源优先级（`--prefer-free`）|
 | `notion_upload.py` | Notion 映射 + 查重 | `create_page()` 字段对齐你的数据库；`TYPE_NAMES` 登记新产物类型；`CALLOUT_ICONS` 增减 callout 触发 emoji |
@@ -173,7 +177,7 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 - **更改输出语言：** 编辑对应 skill 的「输出语言」规则。
 - **更改文章结构：** 编辑 `illustrated_deepdive.md` 的 9 段式，或 `dialogue_transcript.md` 的格式要求。
 - **统一术语译法：** 在 `glossary.md` 增改，核校（Step 2.5）时据此统一全篇及系列上下集。
-- **跳过 Notion 上传：** 从 `CLAUDE.md` 删除 Step 4，并让 `.env` 的 `NOTION_*` 留空。
+- **跳过 Notion 上传：** 从 `CLAUDE.md` 删除 Step 4（细则在 `skills/notion_publish.md`，可一并删），并让 `.env` 的 `NOTION_*` 留空。
 - **改动任何脚本后：** 跑一遍 `python3 tests/run_all.py`（不依赖 pytest，纯标准库）。这些测试守的都是"不报错、只是悄悄出错"那一类——查重失效、半截字幕放行、正文在上传时变形，光看终端输出发现不了。
 - **新增一种产物形态：** 三处都要登记，缺一处就会出问题——① 在对应 skill 里加形态变体（参考"演讲实录"的加法）；② 在 `CLAUDE.md` Step 2 路由 + Step 3 文件名规则处登记；③ 在 `notion_upload.py` 的 `TYPE_NAMES` 里加类型名，否则 Notion 查重认不出它，重传会留下重复页。
 
