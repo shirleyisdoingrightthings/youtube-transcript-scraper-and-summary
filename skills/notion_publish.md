@@ -27,3 +27,18 @@
 ## 读回线上稿
 
 `python3 notion_read.py <page_id_or_url>`。页面若被移出上传数据库，集成会返回 404，需在 Notion 把该页重新「连接（Connections）」给集成后才能读写。`notion_read.py` 目前不输出表格，表格暂无法读回比对。
+
+## 精修阶段用 Notion MCP 直接改页面时，图片块换不了（2026-09-23 实测）
+
+**`notion-update-page` 的 `update_content`（old_str/new_str 精确文本匹配）对已托管图片块无效**，不管图片是脚本传的还是之前精修轮次传的。已用多种方式验证过，全部失败：完整签名 URL（含时间戳/签名）、去掉签名的稳定前缀（只到文件名 `?` 为止）、页面里所有图片共有的固定字符串 `X-Amz-Algorithm=AWS4-HMAC-SHA256`——**连这个都匹配不到**，说明 `notion-fetch` 读出来的那个 `prod-files-secure.s3...` 链接根本不是页面存储的字面内容，只是取数时临时签发的展示用 URL，图片块在底层用的是别的内部引用，不在 `update_content` 能匹配的文本里。**纯文字内容不受影响**（本轮改嘉宾背景、导语都正常），只有图片块换图这一种操作会撞上这个限制。
+
+**解决办法：图片只能由用户在 Notion 里手动换**（选中旧图删除，把本地新图拖进去）。Agent 这边能做的是：改配图源 HTML → `render_figs.py` 重新导出 PNG → 发给用户 → 用户手动替换。**换完之后 alt 文字（图说明）会丢**（手动上传不带 alt），需要另外用短文本精确匹配把 alt 文字补回去——**这条可以正常走 `update_content`**，因为 alt 文字是纯文本、不含签名 URL。
+
+## 精修阶段操作坑（2026-09-23/24 实测，用 Notion MCP 直接改页面时必读）
+
+1. **`update_content` 传多条 `content_updates` 不是原子的**：一次改多处时，可能部分成功、部分失败，报错只显示其中一条，**不能凭报错判断哪些已落地**。改完必须读回线上稿逐条核对（用 python 对落盘的 fetch 结果做 `count`），失败的单条重试。
+2. **汉字不要手写 `\uXXXX` 转义**：实测同一批里连错 4 个字（榨→榜、匹→匠、砸→砎、挣→挖），每次都表现为「No matches found」。直接写字面汉字；确要转义时，先用 python 打印 codepoint 核对。
+3. **`old_str` 越短越唯一越稳**：带评论锚点的段落，fetch 输出里有 `<span discussion-urls=…>`，匹配串要么原样带上 span，要么只取 span 内部的短子串；不要跨多个 span 取长串。
+4. **评论回复**用 `notion-create-comment` + `discussion_id`（形如 `discussion://页面/块/讨论`）；没有 resolve 接口，回复即闭环。
+5. **大页面 `notion-fetch` 会超限并落盘成单行 JSON**：用 python 取 `text`，正则清洗掉带签名的图片 URL、`discussion-urls` span、`<empty-block/>` 后再阅读或喂给 Agent，避免把 S3 临时链接当成正文问题。
+6. **快照不是权威版本**：Notion 页面是权威版本，用户可能在你读快照之后又手改；动手改之前先重新 fetch 一次，以最新文本构造 `old_str`。

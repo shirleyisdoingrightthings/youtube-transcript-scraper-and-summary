@@ -96,7 +96,7 @@ def test_fetch_via_io_accepts_clean_english_track():
             return _FakeResponse(_item_with_tracks([_track(ENGLISH_SAMPLE, language="en")]))
 
         ft.http_utils.post = fake_post
-        text, duration = ft.fetch_via_io("dummyid")
+        text, duration, description = ft.fetch_via_io("dummyid")
         check(bool(text) and duration == 600,
               "正常英文轨道抓取成功，未被语种检查误伤", (bool(text), duration))
     finally:
@@ -118,7 +118,7 @@ def test_fetch_via_io_prefers_english_tagged_track():
             ]))
 
         ft.http_utils.post = fake_post
-        text, duration = ft.fetch_via_io("dummyid")
+        text, duration, description = ft.fetch_via_io("dummyid")
         check(bool(text) and "Welcome" in text,
               "多轨道场景下优先选中 en 标注的轨道，而不是排在前面的那条", text[:60])
     finally:

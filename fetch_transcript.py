@@ -2,8 +2,13 @@
 """
 Fetch YouTube transcript via youtube-transcript.io API (付费) 或 youtube-transcript-api (免费直连)
 Usage: python3 fetch_transcript.py <youtube_url> [--output <path>] [--prefer-free]
-Output: JSON with video_id, url, title, transcript, duration_seconds,
+Output: JSON with video_id, url, title, description, transcript, duration_seconds,
         last_timestamp_seconds, coverage, coverage_verified, source, language
+
+description：YouTube 官方视频简介（videoDetails.shortDescription），优先从付费源
+  youtube-transcript.io 的 microformat 里顺手取（不加请求）；取不到时（免费源路径、
+  或付费源响应缺字段）额外抓一次观看页兜底。抓不到时为 None，不阻断抓取流程——
+  它只是给 Step 2 生成"本期内容"时参考用的素材，不是完整度校验依赖的字段。
 
 完整度校验（防止静默返回半截字幕）：
   抓取后用视频时长 lengthSeconds 与字幕最后一段时间戳做覆盖率校验。
@@ -117,6 +122,34 @@ def get_video_duration(video_id: str) -> typing.Optional[int]:
     return None
 
 
+def get_video_description(video_id: str) -> typing.Optional[str]:
+    """备用简介来源：从 YouTube 观看页抓 videoDetails.shortDescription。
+
+    仅在付费源没能顺手带出简介时才调用（见 fetch_via_io），避免每次都多打一次
+    观看页请求。抓不到时返回 None，由调用方决定是否降级处理，不抛异常、不阻断抓取。
+    """
+    try:
+        resp = http_utils.get(
+            f"https://www.youtube.com/watch?v={video_id}",
+            headers={
+                "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"),
+                "Accept-Language": "en-US,en;q=0.9",
+            },
+            timeout=15, label="watch-page-description",
+        )
+        if resp.ok:
+            m = re.search(r'"shortDescription":"((?:\\.|[^"\\])*)"', resp.text)
+            if m:
+                try:
+                    return json.loads(f'"{m.group(1)}"')
+                except Exception:
+                    return m.group(1).replace('\\n', '\n')
+    except Exception:
+        pass
+    return None
+
+
 def _fmt(start: float, text: str) -> str:
     mins = int(start // 60)
     secs = int(start % 60)
@@ -132,8 +165,8 @@ def _last_ts(transcript: str) -> float:
     return int(m) * 60 + int(s)
 
 
-def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int]]:
-    """主源：youtube-transcript.io。返回 (transcript_text, duration_seconds)。"""
+def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int], typing.Optional[str]]:
+    """主源：youtube-transcript.io。返回 (transcript_text, duration_seconds, description)。"""
     resp = http_utils.post(
         "https://www.youtube-transcript.io/api/transcripts",
         headers={"Authorization": API_AUTH, "Content-Type": "application/json"},
@@ -151,6 +184,16 @@ def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int]]:
         ls = item["microformat"]["playerMicroformatRenderer"].get("lengthSeconds")
         if ls:
             duration = int(ls)
+    except Exception:
+        pass
+
+    # 官方简介：与时长同一个 microformat 里顺手取，不额外发请求
+    description = None
+    try:
+        desc_field = item["microformat"]["playerMicroformatRenderer"].get("description")
+        desc_text = desc_field.get("simpleText") if isinstance(desc_field, dict) else desc_field
+        if desc_text:
+            description = desc_text
     except Exception:
         pass
 
@@ -187,7 +230,7 @@ def fetch_via_io(video_id: str) -> typing.Tuple[str, typing.Optional[int]]:
                 f"疑似语种错标：轨道标注为英文但拉丁字母占比仅 {ratio:.0%}"
                 "（可能是非英文自动翻译轨被误标成 en 返回），已判定该源本次抓取失败"
             )
-    return transcript, duration
+    return transcript, duration, description
 
 
 def fetch_via_ytapi(video_id: str) -> typing.Tuple[str, typing.Optional[str]]:
@@ -257,6 +300,7 @@ def main():
     title = get_video_title(video_id)
 
     duration = None
+    description = None
     state = {"transcript": "", "source": "", "language": None, "coverage": None}
 
     def coverage(tx: str) -> typing.Optional[float]:
@@ -279,12 +323,14 @@ def main():
         return cov
 
     def fetch_paid() -> typing.Optional[float]:
-        nonlocal duration
+        nonlocal duration, description
         if not API_AUTH or API_AUTH == "Basic ":
             raise RuntimeError("YOUTUBE_TRANSCRIPT_API_KEY 未配置，跳过付费源")
-        tx, dur = fetch_via_io(video_id)
+        tx, dur, desc = fetch_via_io(video_id)
         if dur:
             duration = dur
+        if desc:
+            description = desc
         return take(tx, "youtube-transcript.io", None)
 
     def fetch_free() -> typing.Optional[float]:
@@ -344,11 +390,16 @@ def main():
         print("[warn] 拿不到视频时长，本次无法校验字幕完整度（coverage_verified=false），"
               "请人工比对视频时长与字幕末段时间戳后再决定是否使用", file=sys.stderr)
 
+    # 付费源没带出简介时（免费源路径、或响应缺字段）兜底抓一次；抓不到不阻断，None 即可
+    if not description:
+        description = get_video_description(video_id)
+
     result = json.dumps({
         "video_id": video_id,
         "url": f"https://www.youtube.com/watch?v={video_id}",
         "original_url": url,
         "title": title,
+        "description": description,
         "transcript": transcript,
         "duration_seconds": duration,
         "last_timestamp_seconds": int(last_ts),

@@ -160,6 +160,7 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 | `skills/reader_facing_review.md` | 复核 + Agent Council 协议 | 互审机制、复核清单 |
 | `skills/handoff_doc.md` | 交接文档模板 | 交接文档区块、更新铁律 |
 | `skills/transcript_files.md` | 字幕文件命名与存放 | 批量预判命名、pending 目录、summary 导读 |
+| `skills/reference_translation.md` | 参考译文使用规范 | 用户提供别家译本时：查漏、找语感，事实回字幕核 |
 | `skills/proper_noun_check.md` | 专名核对铁律 | 五条判据、双源参照 |
 | `skills/notion_publish.md` | Notion 上传细则 | 查重、本地图片、人工处理的 ⚠️、链接变化 |
 | `skills/meta_harness.md` | 棘轮检查 + 系统自检 | Ratchet Check 流程、Step 6 清单 |

@@ -164,6 +164,12 @@ def bullet_block(text: str) -> dict:
             "bulleted_list_item": {"rich_text": rich_text(text)}}
 
 
+def numbered_block(text: str) -> dict:
+    # Notion 按相邻的 numbered_list_item 自动编号，源文件里写的 1. 2. 数字不传上去
+    return {"object": "block", "type": "numbered_list_item",
+            "numbered_list_item": {"rich_text": rich_text(text)}}
+
+
 def divider_block() -> dict:
     return {"object": "block", "type": "divider", "divider": {}}
 
@@ -332,9 +338,9 @@ def parse_markdown(content: str) -> tuple[str, list]:
         elif re.match(r"^[-*•]\s+", line):
             blocks.append(bullet_block(re.sub(r"^[-*•]\s+", "", line)))
 
-        # ── 有序列表 ──
+        # ── 有序列表 ──（此前误转成无序列表，编号在 Notion 里会丢）
         elif re.match(r"^\d+\.\s+", line):
-            blocks.append(bullet_block(re.sub(r"^\d+\.\s+", "", line)))
+            blocks.append(numbered_block(re.sub(r"^\d+\.\s+", "", line)))
 
         # ── 普通段落（合并连续行）──
         else:

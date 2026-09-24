@@ -51,6 +51,7 @@
 │   ├── council/                    # Council 三角色 prompt 模板（progressive / conservative / judge）
 │   ├── handoff_doc.md              # 交接文档模板与更新铁律
 │   ├── transcript_files.md         # 批量预判的字幕命名、pending 存放与 summary 导读
+│   ├── reference_translation.md    # 用户给出别家译文时：只查漏和找语感，事实回字幕核
 │   ├── proper_noun_check.md        # Step 2.5 专名核对铁律（五条判据）
 │   ├── notion_publish.md           # Step 4 上传细则（查重、图片、人工处理项）
 │   └── meta_harness.md             # Step 5.5 棘轮检查 + Step 6 系统自检

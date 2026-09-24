@@ -36,10 +36,10 @@ def _run(argv):
     return code, json.loads(out.getvalue()), err.getvalue()
 
 
-def _paid(text, duration):
+def _paid(text, duration, description=None):
     def _f(video_id):
         paid_calls.append(video_id)
-        return text, duration
+        return text, duration, description
     return _f
 
 
@@ -50,6 +50,7 @@ def _free(text, lang="en"):
 def setup():
     ft.API_AUTH = "Basic test-token"
     ft.get_video_title = lambda vid: "测试视频"
+    ft.get_video_description = lambda vid: None
 
 
 def test_coverage_gate():

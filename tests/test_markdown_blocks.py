@@ -133,11 +133,22 @@ def test_length_guard():
           "引用 / 标题 / 列表同受 2000 保护（原先只有段落有）")
 
 
+def test_lists():
+    _, blocks = nu.parse_markdown("- 甲\n- 乙\n\n1. **一号判断。** 展开\n\n2. 二号判断")
+    types = [b["type"] for b in blocks]
+    check(types == ["bulleted_list_item", "bulleted_list_item",
+                    "numbered_list_item", "numbered_list_item"],
+          "有序列表 → numbered_list_item（修复前被转成无序列表，编号丢失）", types)
+    check(_flat(blocks[2]).startswith("一号判断") and "1." not in _flat(blocks[2]),
+          "编号数字不重复写进正文，由 Notion 自动编号", _flat(blocks[2]))
+
+
 def main():
     print("── Markdown → Notion blocks ──")
     test_block_conversion()
     test_callouts()
     test_length_guard()
+    test_lists()
 
 
 if __name__ == "__main__":
