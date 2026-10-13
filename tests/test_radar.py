@@ -6,9 +6,7 @@
 高产频道凑不出成熟样本时降级路径失效（整个频道从榜单消失）、
 RSS 里的播放量没解析出来（热度全变 "—"）。这些光看终端输出都发现不了。
 """
-import os
 import sqlite3
-import tempfile
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 

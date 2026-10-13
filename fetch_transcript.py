@@ -34,7 +34,6 @@ import re
 import json
 import os
 import typing
-import requests
 from dotenv import load_dotenv
 
 import http_utils
