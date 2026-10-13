@@ -73,14 +73,14 @@ text{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",
 <g class="c-teal"><rect x="40" y="326" width="300" height="42" rx="8"/><text class="th" x="56" y="344">Step 2.6 Agent Council 自检</text><text class="ts" x="56" y="360">全新评审 + 核实 Agent</text></g>
 <rect class="box" x="396" y="326" width="244" height="42" rx="8"/><text class="ts" x="410" y="351">reader_facing_review.md</text>
 
-<g class="c-gray"><rect x="40" y="380" width="300" height="42" rx="8"/><text class="th" x="56" y="398">Step 3 归档三件套</text><text class="ts" x="56" y="414">成品 + 字幕 + 交接文档</text></g>
-<rect class="box" x="396" y="380" width="244" height="42" rx="8"/><text class="ts" x="410" y="397">handoff_doc.md · tags.json</text><text class="ts" x="410" y="413">→ output/&lt;标题&gt;/</text>
+<g class="c-gray"><rect x="40" y="380" width="300" height="42" rx="8"/><text class="th" x="56" y="398">Step 3 归档</text><text class="ts" x="56" y="414">成品 + 字幕</text></g>
+<rect class="box" x="396" y="380" width="244" height="42" rx="8"/><text class="ts" x="410" y="397">成品 .md · transcript.json</text><text class="ts" x="410" y="413">→ output/&lt;标题&gt;/</text>
 
 <g class="c-gray"><rect x="40" y="434" width="300" height="42" rx="8"/><text class="th" x="56" y="452">Step 4 上传 Notion</text><text class="ts" x="56" y="468">查重 · 幂等重建</text></g>
 <rect class="box" x="396" y="434" width="244" height="42" rx="8"/><text class="ts" x="410" y="459">notion_upload.py</text>
 
-<g class="c-teal"><rect x="40" y="488" width="300" height="42" rx="8"/><text class="th" x="56" y="506">Step 4.5 精修 + 定稿终审</text><text class="ts" x="56" y="522">Council 终审 · 同步交接文档</text></g>
-<rect class="box" x="396" y="488" width="244" height="42" rx="8"/><text class="ts" x="410" y="505">notion_read.py</text><text class="ts" x="410" y="521">handoff_doc.md</text>
+<g class="c-teal"><rect x="40" y="488" width="300" height="42" rx="8"/><text class="th" x="56" y="506">Step 4.5 精修 + 定稿终审</text><text class="ts" x="56" y="522">轻量终审 · 定稿清理</text></g>
+<rect class="box" x="396" y="488" width="244" height="42" rx="8"/><text class="ts" x="410" y="505">notion_read.py</text><text class="ts" x="410" y="521">reader_facing_review.md</text>
 
 <g class="c-gray"><rect x="40" y="542" width="300" height="42" rx="8"/><text class="th" x="56" y="560">Step 5 / 5.5 日志 + 棘轮检查</text><text class="ts" x="56" y="576">记录 · 失败驱动改进</text></g>
 <rect class="box" x="396" y="542" width="244" height="42" rx="8"/><text class="ts" x="410" y="567">workflow_execution.md</text>

@@ -88,7 +88,7 @@ https://youtu.be/am_oeAoUhew
 帮我将这个视频整理为对话体逐字稿：https://youtu.be/am_oeAoUhew
 ```
 
-确定形态后，系统自动跑完抓取、生成、**对照字幕核校**、Agent Council 互审、归档三件套、Notion 上传，并在每篇目录下留一份**交接文档**供新对话接续——无需额外干预。
+确定形态后，系统自动跑完抓取、生成、**对照字幕核校**、Agent Council 互审、归档（成品 + 字幕）、Notion 上传——无需额外干预。
 
 ---
 
@@ -107,9 +107,9 @@ https://youtu.be/am_oeAoUhew
 | **Step 2 生成内容** | 按形态写稿 | 路由：图文精读 / 逐字稿 / 演讲实录 / 观察稿 | `skills/illustrated_deepdive.md`、`skills/dialogue_transcript.md`、`skills/observation_commentary.md` |
 | **Step 2.5 对照字幕核校** | 逐项核对事实/数字/专名/因果（工作流灵魂） | 专名铁律：先查证、拿不准标 ⚠️、绝不臆造；带时间戳的成品先跑机检 | `skills/proper_noun_check.md`、`glossary.md`、`check_transcript_edit.py` |
 | **Step 2.6 Agent Council 自检** | 激进 + 保守两位全新审稿人并行打分 → 全新 Judge 裁决 → 主模型按裁决清硬伤 | 闸门：必改硬伤清零 | `skills/reader_facing_review.md`、`skills/council/` |
-| **Step 3 归档三件套** | 建中文标题目录，落地成品 + 字幕 + 交接文档 | — | `skills/handoff_doc.md`、`output/<标题>/` |
+| **Step 3 归档** | 建中文标题目录，落地成品 + 字幕 | — | `output/<标题>/` |
 | **Step 4 上传 Notion** | 上传（重传查重、每类型只留一页、幂等）后读回核对 | 闸门：读回比对不一致不报成功 | `notion_upload.py`、`notion_read.py`、`skills/notion_publish.md` |
-| **Step 4.5 精修 + 定稿终审** | 多轮人机精修 + 定稿前再跑 Council；每轮同步更新交接文档 | 闸门：输出"可发布"判定 | `notion_read.py`、`reader_facing_review.md`、`handoff_doc.md` |
+| **Step 4.5 精修 + 定稿终审** | 多轮人机精修 + 定稿前再跑 Council；定稿后清理到只留两件 | 闸门：输出"可发布"判定 | `notion_read.py`、`reader_facing_review.md` |
 | **Step 5 / 5.5 日志 + 棘轮** | 记录执行；有异常/偏差则提报永久规则 | 失败驱动改进 | `skills/meta_harness.md`、`logs/workflow_execution.md`、`logs/system_changelog.md` |
 | **Step 6 系统自检与进化** | 盘点本轮改动、更新核心文档 | 触发词驱动（Meta-Harness） | `skills/meta_harness.md`、`CLAUDE.md`、`skills/`、`logs/system_changelog.md` |
 
@@ -129,7 +129,7 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 
 ---
 
-> ⚠️ **`output/` 是三件套的唯一本地副本，别当成临时目录清理。** Notion 上只有成品，`transcript.json` 与 `交接文档.md` 只存在于本地，且 `output/` 不进 Git。字幕删了要重抓——花付费配额，老视频还可能已经没有字幕。
+> ⚠️ **`output/` 是成品与字幕的唯一本地副本，别当成临时目录清理。** Notion 上只有成品，`transcript.json` 只存在于本地，且 `output/` 不进 Git。字幕删了要重抓——花付费配额，老视频还可能已经没有字幕。
 
 ### 四层架构
 
@@ -138,12 +138,12 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 | 选题发现层 | 找出值得预判的候选（相对热度雷达） | `radar.py`、`radar_channels.json` |
 | 抓取层 | 拿字幕、保覆盖率 | `fetch_transcript.py` |
 | 生成与质控层 | 写稿 + 核校 + 互审 | `skills/*.md`（生成、核校、发布、自进化各规范）+ `glossary.md` |
-| 归档发布层 | 三件套 + 上云 | `output/<标题>/`、`notion_upload.py`、`notion_read.py` |
+| 归档发布层 | 成品 + 字幕 + 上云 | `output/<标题>/`、`notion_upload.py`、`notion_read.py` |
 | 自进化层 | 记录 + 棘轮 + 进化 | `logs/*.md`、`system_changelog.md` |
 
 ### 设计要点（一句话）
 
-**两道 Agent 闸门夹住"生成"**（Step 2.5 字幕核校 + Step 2.6/4.5 Council 互审）、**三件套 + 交接文档保证可交接**（成品 + `transcript.json` + `交接文档.md`，让新对话只读一页即可接续）、**日志 + 棘轮 + Meta-Harness 让工作流自己迭代自己**。
+**两道 Agent 闸门夹住"生成"**（Step 2.5 字幕核校 + Step 2.6/4.5 Council 互审）、**成品 + `transcript.json` 两件归档**（来源信息不留存）、**日志 + 棘轮 + Meta-Harness 让工作流自己迭代自己**。
 
 ---
 
@@ -158,7 +158,6 @@ python3 check_transcript_edit.py "output/<标题>/<标题> - 逐字稿.md"
 | `skills/dialogue_transcript.md` | 逐字稿 + 演讲实录规范 | 对话体结构、说话人规则、演讲实录/现场回闪形态 |
 | `skills/observation_commentary.md` | 观察 / 观点稿规范 | 中心判断线、多信源编织、冷峻严肃的语体 |
 | `skills/reader_facing_review.md` | 复核 + Agent Council 协议 | 互审机制、复核清单 |
-| `skills/handoff_doc.md` | 交接文档模板 | 交接文档区块、更新铁律 |
 | `skills/transcript_files.md` | 字幕文件命名与存放 | 批量预判命名、pending 目录、summary 导读 |
 | `skills/reference_translation.md` | 参考译文使用规范 | 用户提供别家译本时：查漏、找语感，事实回字幕核 |
 | `skills/proper_noun_check.md` | 专名核对铁律 | 五条判据、双源参照 |
