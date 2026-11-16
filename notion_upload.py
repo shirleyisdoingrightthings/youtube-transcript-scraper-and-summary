@@ -1,14 +1,16 @@
 #!/opt/homebrew/bin/python3.11
 """
 将 Blog Markdown 文件上传到 Notion Resources Library 数据库。
-Usage: python3 notion_upload.py <markdown_file_path> <youtube_url>
+Usage:
+    python3 notion_upload.py <markdown_file_path> <youtube_url>
+        [--category AI] [--status "To Do"] [--description "30秒速览"]
 """
 from __future__ import annotations
 
-import sys
-import re
+import argparse
 import os
-from datetime import datetime
+import re
+import sys
 from dotenv import load_dotenv
 
 import http_utils
@@ -23,6 +25,15 @@ NOTION_VERSION = "2022-06-28"
 NOTION_UPLOAD_VERSION = "2026-03-11"
 FILE_UPLOAD_MAX_BYTES = 20 * 1024 * 1024      # 单文件上限 20 MB
 DATABASE_ID    = os.environ.get("NOTION_DATABASE_ID", "")
+
+NOTION_TYPE_NAME = "🎬 YouTube"
+VALID_CATEGORIES = ("AI", "Finance", "Personal", "Entertainment")
+DEFAULT_CATEGORY = "AI"
+VALID_STATUSES = ("To Do", "In Progress", "Complete")
+DEFAULT_STATUS = "To Do"
+
+_CATEGORY_MAP = {c.lower(): c for c in VALID_CATEGORIES}
+_STATUS_MAP = {s.lower(): s for s in VALID_STATUSES}
 
 HEADERS = {
     "Authorization":  f"Bearer {NOTION_API_KEY}",
@@ -401,19 +412,124 @@ def archive_page(page_id: str) -> None:
     )
 
 
-def create_page(title: str, youtube_url: str) -> str:
+def normalize_categories(raw: list[str] | str | None) -> list[str]:
+    """将 CLI / 调用方传入的 Category 规范化为数据库允许的枚举值，非法值直接报错。"""
+    if raw is None:
+        return [DEFAULT_CATEGORY]
+    items = [raw] if isinstance(raw, str) else list(raw)
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        for part in str(item).split(","):
+            name = part.strip()
+            if not name:
+                continue
+            canonical = _CATEGORY_MAP.get(name.lower())
+            if canonical is None:
+                raise ValueError(
+                    f"不支持的 Category：{name!r}，可选：{', '.join(VALID_CATEGORIES)}"
+                )
+            if canonical not in seen:
+                seen.add(canonical)
+                out.append(canonical)
+    return out or [DEFAULT_CATEGORY]
+
+
+def normalize_status(raw: str | None) -> str:
+    """将 Status 规范化为数据库允许的值（默认 To Do）。"""
+    if raw is None or not str(raw).strip():
+        return DEFAULT_STATUS
+    name = " ".join(str(raw).strip().split())
+    canonical = _STATUS_MAP.get(name.lower())
+    if canonical is None:
+        raise ValueError(
+            f"不支持的 Status：{raw!r}，可选：{', '.join(VALID_STATUSES)}"
+        )
+    return canonical
+
+
+def extract_description(content: str, limit: int = 300) -> str:
+    """从文稿开头提取题记（blockquote）作为 Notion Description 的简短速览。"""
+    lines = content.split("\n")
+    i = 0
+    if lines and lines[0].strip() == "---":
+        i = 1
+        while i < len(lines) and lines[i].strip() != "---":
+            i += 1
+        i += 1
+
+    checked = 0
+    while i < len(lines) and checked < 15:
+        line = lines[i].strip()
+        i += 1
+        if not line:
+            continue
+        if line.startswith("##"):
+            break
+        if line.startswith("# "):
+            # 跳过顶部的文章 H1，若已经进入 # 核心看点 等章节则停止
+            if checked > 0:
+                break
+            checked += 1
+            continue
+        checked += 1
+        if line.startswith(">"):
+            icon, _ = _split_callout(line)
+            if icon:
+                continue
+            text = re.sub(r"^>\s*", "", line)
+            text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+            text = text.replace("**", "").replace("`", "").strip()
+            text = re.sub(r"\s+", " ", text)
+            if text:
+                return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+    return ""
+
+
+def build_page_properties(
+    title: str,
+    youtube_url: str,
+    *,
+    categories: list[str] | str | None = None,
+    status: str | None = None,
+    description: str | None = None,
+) -> dict:
+    """构造写入 Resources Library 的页面 properties（Created Time 由 Notion 自动维护）。"""
+    cats = normalize_categories(categories)
+    st = normalize_status(status)
+    props: dict = {
+        "Name":     {"title": [{"type": "text", "text": {"content": title}}]},
+        "URL":      {"url": youtube_url},
+        "Type":     {"select": {"name": NOTION_TYPE_NAME}},
+        "Category": {"multi_select": [{"name": c} for c in cats]},
+        "Status":   {"status": {"name": st}},
+    }
+    desc = (description or "").strip()
+    if desc:
+        props["Description"] = {
+            "rich_text": [{"type": "text", "text": {"content": desc[:TEXT_LIMIT]}}]
+        }
+    return props
+
+
+def create_page(
+    title: str,
+    youtube_url: str,
+    *,
+    categories: list[str] | str | None = None,
+    status: str | None = None,
+    description: str | None = None,
+) -> str:
     """在数据库里新建一页，返回 page_id"""
-    today = datetime.now().strftime("%Y-%m-%dT%H:%M:%S+08:00")
     payload = {
         "parent": {"database_id": DATABASE_ID},
-        "properties": {
-            "Name":         {"title": [{"type": "text", "text": {"content": title}}]},
-            "URL":          {"url": youtube_url},
-            "Type":         {"select": {"name": "视频"}},
-            "Category":     {"multi_select": [{"name": "播客访谈"}]},
-            "Created Date": {"date": {"start": today}},
-            "Status":       {"status": {"name": "Not started"}},
-        },
+        "properties": build_page_properties(
+            title,
+            youtube_url,
+            categories=categories,
+            status=status,
+            description=description,
+        ),
     }
     resp = http_utils.post(
         "https://api.notion.com/v1/pages",
@@ -601,22 +717,53 @@ def resolve_dedup(youtube_url: str, base_title: str, current_suffix: str) -> str
 # 主流程
 # ───────────────────────────────────────────
 
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="将 Blog Markdown 文件上传到 Notion Resources Library 数据库。"
+    )
+    parser.add_argument("markdown_file", help="本地 Markdown 成稿路径")
+    parser.add_argument("youtube_url", help="原 YouTube 视频链接")
+    parser.add_argument(
+        "-c", "--category",
+        action="append",
+        dest="categories",
+        help=f"主题领域，可多次传参或逗号分隔（可选：{'/'.join(VALID_CATEGORIES)}，默认：{DEFAULT_CATEGORY}）",
+    )
+    parser.add_argument(
+        "-s", "--status",
+        default=DEFAULT_STATUS,
+        help=f"阅读状态（可选：{'/'.join(VALID_STATUSES)}，默认：{DEFAULT_STATUS}）",
+    )
+    parser.add_argument(
+        "-d", "--description",
+        default=None,
+        help="30 秒速览（留空时自动提取正文开头的题记 blockquote）",
+    )
+    return parser.parse_args(argv)
+
+
 def main():
+    args = parse_args()
+    try:
+        categories = normalize_categories(args.categories)
+        status = normalize_status(args.status)
+    except ValueError as e:
+        print(f"[ERROR] {e}")
+        sys.exit(1)
+
     if not NOTION_API_KEY or not DATABASE_ID:
         print("[ERROR] NOTION_API_KEY or NOTION_DATABASE_ID not set in .env")
         sys.exit(1)
-    if len(sys.argv) < 3:
-        print("Usage: notion_upload.py <markdown_file> <youtube_url>")
-        sys.exit(1)
 
-    md_path     = sys.argv[1]
-    youtube_url = sys.argv[2]
+    md_path = args.markdown_file
+    youtube_url = args.youtube_url
 
     with open(md_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     _, blocks = parse_markdown(content)
     blocks = resolve_local_images(blocks, os.path.dirname(os.path.abspath(md_path)))
+    description = args.description if args.description is not None else extract_description(content)
 
     # 从文件名提取标题与类型
     basename = os.path.basename(md_path)
@@ -638,10 +785,17 @@ def main():
         blocks.insert(0, image_block(thumbnail_url))
 
     print(f"📄 标题：{title}")
+    print(f"🏷️  属性：{NOTION_TYPE_NAME} | Category={','.join(categories)} | Status={status}")
     print(f"📦 共 {len(blocks)} 个块")
 
     print("🔗 正在创建 Notion 页面...")
-    page_id = create_page(title, youtube_url)
+    page_id = create_page(
+        title,
+        youtube_url,
+        categories=categories,
+        status=status,
+        description=description,
+    )
 
     print("⬆️  正在上传内容...")
     try:

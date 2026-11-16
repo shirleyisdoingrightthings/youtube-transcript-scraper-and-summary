@@ -124,7 +124,7 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 
 ### Step 3：保存 Markdown 文件与目录归档
 
-1. **不写 YAML Frontmatter、不打双链**：成品 `.md` 开头**不加** `tags:` 块，正文**不使用** Obsidian 双链 `[[ ]]`。两者都是已移除的 Obsidian 同步工作流的残留——Notion 端不消费标签（Category 由脚本固定填写），双链在上传时还得专门剥掉方括号。历史稿里残留的 `[[ ]]` 由 `notion_upload.py` 自动剥离，无需回头改。
+1. **不写 YAML Frontmatter、不打双链**：成品 `.md` 开头**不加** `tags:` 块，正文**不使用** Obsidian 双链 `[[ ]]`。两者都是已移除的 Obsidian 同步工作流的残留——Notion 端不消费 Markdown 标签（Category 通过 `notion_upload.py --category` 传入 `AI` / `Finance` / `Personal` / `Entertainment`，默认 `AI`），双链在上传时还得专门剥掉方括号。历史稿里残留的 `[[ ]]` 由 `notion_upload.py` 自动剥离，无需回头改。
 2. **建立目录与命名**：
    - **不要直接使用视频的英文原标题**作为目录名和文件名。使用 Step 2 中根据 skills 规范生成的**中文发布标题**（一句主题，不强制 `嘉宾姓名｜` 前缀，见 `publication_format.md`；文件夹名与 Notion 页面标题保持一致）。
    - 若中文标题含有 `/` 或 `:` 等路径非法字符，请替换为 `-` 或空格。
@@ -148,9 +148,9 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 
 文件归档完成后，上传 Notion：
 
-运行以下命令将文章上传到 Notion：
+运行以下命令将文章上传到 Notion（按视频内容传入对应 `--category`，可选 `AI` / `Finance` / `Personal` / `Entertainment`，默认 `AI`；`--status` 可选 `To Do` / `In Progress`，默认 `To Do`；未传 `--description` 时自动提取开头题记）：
 ```bash
-python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>"
+python3 notion_upload.py "<刚才保存的md文件路径>" "<视频原始URL>" --category AI --status "To Do"
 ```
 **上传前加载 `skills/notion_publish.md`**（查重机制、本地图片自动上传、两种需人工处理的 ⚠️、链接每次重传都会变）。脚本按 URL 自动查重、同类型旧页归档重建；**终端出现任何 ⚠️ 都按该文件处理，不得忽略。**
 

@@ -16,6 +16,7 @@ MODULES = [
     "test_fetch_coverage",
     "test_fetch_language_guard",
     "test_notion_dedup",
+    "test_notion_properties",
     "test_markdown_blocks",
     "test_notion_images",
     "test_edit_check",
