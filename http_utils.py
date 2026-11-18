@@ -13,11 +13,18 @@
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 import typing
 
-import requests
+try:
+    import requests
+except ModuleNotFoundError:
+    if os.environ.get("_YT2BLOG_REEXEC") != "1" and os.path.exists("/usr/bin/python3"):
+        os.environ["_YT2BLOG_REEXEC"] = "1"
+        os.execv("/usr/bin/python3", ["/usr/bin/python3", *sys.argv])
+    raise
 
 DEFAULT_RETRIES = 4
 DEFAULT_BACKOFF = 1.5          # 退避基数：1.5s, 3s, 6s, 12s

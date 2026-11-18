@@ -9,6 +9,15 @@ import os
 import sys
 import traceback
 
+try:
+    import dotenv  # noqa: F401
+    import requests  # noqa: F401
+except ModuleNotFoundError:
+    if os.environ.get("_YT2BLOG_REEXEC") != "1" and os.path.exists("/usr/bin/python3"):
+        os.environ["_YT2BLOG_REEXEC"] = "1"
+        os.execv("/usr/bin/python3", ["/usr/bin/python3", *sys.argv])
+    raise
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 MODULES = [
@@ -20,6 +29,7 @@ MODULES = [
     "test_markdown_blocks",
     "test_notion_images",
     "test_edit_check",
+    "test_mode_b_check",
     "test_radar",
 ]
 

@@ -95,6 +95,8 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 #### 模式 B：对话体逐字稿
 **加载并读取 `skills/dialogue_transcript.md` 中的生成规范。**
 严格按照规范中的编辑原则、说话人识别规则和输出结构，生成对话体逐字稿。**用户若提供了别家的参考译文，再加载 `skills/reference_translation.md`**：它只用来查漏和找语感，事实、归属、限定语一律回字幕核。
+- **长视频（>45 分钟）轻量三段并行与断点续传**：时长 `>45 分钟` 时先跑 `python3 -B split_and_stitch.py split transcript_temp.json --parts 3` 切分至 `output/_work_<video_id>/`，最多起 3 个并行 Worker 各自输出 `part1..3_timestamped.md`（支持断点续传），再用 `split_and_stitch.py stitch` 拼接、跑 `check_transcript_edit.py`、去时间戳并归档。
+- **模式 B 全量静态体检**：归档后跑 `python3 -B check_mode_b.py "output/<中文标题>/<中文标题> - 逐字稿.md" --working-draft "<带时间戳工作稿.md>" --transcript "output/<中文标题>/transcript.json"`（纯文字模式加 `--pure-text`），校验 MB.1–MB.4 全绿。
 
 ### Step 2.5：对照字幕核校（强制 · 工作流核心）
 

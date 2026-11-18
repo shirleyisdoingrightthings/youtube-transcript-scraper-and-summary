@@ -10,7 +10,7 @@ description: >-
 # YouTube → Notion 深度转写、协同精修与自进化工作流
 
 > **全局技能根目录**：`/Users/jialiwu/.gemini/config/skills/youtube-to-blog`
-> 执行本技能中的任何脚本（`fetch_transcript.py`、`check_transcript_edit.py`、`notion_upload.py`、`notion_read.py`、`radar.py`、`render_figs.py`）或读取相对路径下的 `skills/*.md`、`glossary.md`、`logs/*.md` 时，**一律以 `/Users/jialiwu/.gemini/config/skills/youtube-to-blog` 为工作目录（cwd）**，无需依赖桌面或当前打开的项目工作区。
+> 执行本技能中的任何脚本（`fetch_transcript.py`、`check_transcript_edit.py`、`check_mode_b.py`、`split_and_stitch.py`、`notion_upload.py`、`notion_read.py`、`radar.py`、`render_figs.py`）或读取相对路径下的 `skills/*.md`、`glossary.md`、`logs/*.md` 时，**一律以 `/Users/jialiwu/.gemini/config/skills/youtube-to-blog` 为工作目录（cwd）**，无需依赖桌面或当前打开的项目工作区。调用 Python 脚本时统一加 `-B`（`python3 -B ...`）防止产生 `__pycache__`；各脚本已内置环境自愈（若默认 `python3` 缺少 `dotenv`/`requests` 会自动切换至 `/usr/bin/python3`）。
 
 ---
 
@@ -138,6 +138,8 @@ python3 fetch_transcript.py <用户提供的URL> --output transcript_temp.json
 #### 模式 B：对话体逐字稿
 **加载并读取 `skills/dialogue_transcript.md` 中的生成规范。**
 严格按照规范中的编辑原则、说话人识别规则和输出结构，生成对话体逐字稿。**用户若提供了别家的参考译文，再加载 `skills/reference_translation.md`**：它只用来查漏和找语感，事实、归属、限定语一律回字幕核。
+- **长视频（>45 分钟）轻量三段并行与断点续传（防额度耗尽铁律）**：视频时长 `>45 分钟` 时，**严禁使用动辄派生 30+ 子代理的重型多层级编排**。先执行 `python3 -B split_and_stitch.py split transcript_temp.json --parts 3` 将字幕按章节切入 `output/_work_<video_id>/`，仅派生 **3 个并行编译 Worker**（或由主模型分段处理）各自编译 `part1..3_timestamped.md` 并当场落盘；若中途因配额重置或中断，已生成的 `partN_timestamped.md` 直接复用、绝不重跑。三段完成后用 `python3 -B split_and_stitch.py stitch --work-dir output/_work_<video_id> --front-matter <导读壳.md> --title "<中文标题>"` 自动拼接、跑 `check_transcript_edit.py` 机检、剥离时间戳并归档至 `output/<中文标题>/`。
+- **模式 B 全量静态体检（`check_mode_b.py`）**：去时间戳归档后，执行 `python3 -B check_mode_b.py "output/<中文标题>/<中文标题> - 逐字稿.md" --working-draft "<带时间戳工作稿.md>" --transcript "output/<中文标题>/transcript.json"`（纯文字版加 `--pure-text`），1 秒校验共有壳顺序、空行状态机、说话人标签、加粗、千分位与区间连字符、零 AI 腔、术语表、`⚠️` 1:1 对等，以及工作稿剥离时间戳后与成品逐行零差异。
 
 ### Step 2.5：对照字幕核校（强制 · 工作流核心）
 

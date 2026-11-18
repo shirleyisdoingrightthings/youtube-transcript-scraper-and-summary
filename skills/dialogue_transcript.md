@@ -137,7 +137,8 @@
 发布形态**不带 `[MM:SS]` 时间戳**。但时间戳是 `check_transcript_edit.py` 做缺口扫描的唯一依据，去掉之后那道防线就失效了。因此固定流程为：
 
 1. **生成与精编阶段带时间戳**，正常跑 Step 2.5 的机检（时间戳单调递增 + ≥2 分钟删除区间扫描）。
-2. **机检全绿之后，再统一去掉时间戳**转为发布形态。顺序不可颠倒——先去时间戳等于跳过机检。
+   - **长视频（>45 分钟）分段并行与断点续传**：先跑 `python3 -B split_and_stitch.py split transcript_temp.json --parts 3` 将字幕按官方章节切入 `output/_work_<video_id>/`，由最多 3 个并行 Worker 各自生成 `part1_timestamped.md`～`part3_timestamped.md` 并分别通过 `check_transcript_edit.py` 校验（中途中断或额度重置时直接复用已落盘分片，不重跑已完成部分）。随后用 `python3 -B split_and_stitch.py stitch --work-dir output/_work_<video_id> --front-matter <导读壳.md> --title "<中文标题>"` 自动拼接、执行全文机检、确定性剥离时间戳并归档至 `output/<中文标题>/`。
+2. **机检全绿之后，再统一去掉时间戳**转为发布形态，并运行 `python3 -B check_mode_b.py "<成品.md>" --working-draft "<带时间戳工作稿.md>" --transcript "<transcript.json>"`（纯文字版加 `--pure-text`）确认共有壳、空行状态机、说话人标签、数字体例、零 AI 味、术语表、`⚠️` 对等性与剥离时间戳前后逐行零差异。顺序不可颠倒——先去时间戳等于跳过机检。
 3. 转为发布形态**之后**若还要做删减或结构调整，**机检返回"成品里没有时间戳，无需扫描"不构成通过**（那是跳过，不是放行）。必须回 `transcript.json` 人工对照核校，并在交付汇报里写明删了哪几段、理由属四类中的哪一类。
 4. 外部素材的时间戳照旧保留（写法见「外部素材的时间戳写法」），不受本条影响。
 

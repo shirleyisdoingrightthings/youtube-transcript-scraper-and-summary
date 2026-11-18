@@ -11,7 +11,14 @@ import argparse
 import os
 import re
 import sys
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    if os.environ.get("_YT2BLOG_REEXEC") != "1" and os.path.exists("/usr/bin/python3"):
+        os.environ["_YT2BLOG_REEXEC"] = "1"
+        os.execv("/usr/bin/python3", ["/usr/bin/python3", *sys.argv])
+    raise
 
 import http_utils
 

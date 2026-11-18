@@ -234,7 +234,18 @@ def main() -> int:
         print()
 
     if not stamps:
-        print("ℹ️  成品里没有时间戳（图文精读稿等形态不带时间戳），无需扫描。")
+        if as_json:
+            print(json.dumps({
+                "file": md_path,
+                "transcript": None,
+                "timestamps": 0,
+                "reversals": [],
+                "gaps": [],
+                "min_gap_seconds": min_gap,
+                "rhythm": rhythm,
+            }, ensure_ascii=False, indent=2))
+        else:
+            print("ℹ️  成品里没有时间戳（图文精读稿等形态不带时间戳），无需扫描。")
         return 0
 
     if transcript_path is None:
