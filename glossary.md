@@ -1,0 +1,62 @@
+# 项目术语对照表（Glossary）
+
+> 本表用于 Step 2.5 对照字幕核校时统一译法与写法，保证**跨篇、跨系列上下集**一致。
+> 发现新的高频术语或需要拍板的译法时，在此追加（参照 CLAUDE.md Step 6 Meta-Harness 自检）。
+> **条目状态（2026-10-13 起）**：新增条目在说明栏开头标 `【已确认】`、`【候选】` 或 `【单篇例外】`。2026-10-13 之前入表、未标注的条目视为已确认。只有用户批准过的才能标已确认；单篇审稿意见先进候选，不直接变成跨篇硬规则。
+
+## 一、通用译法规则
+- 高共识词保留英文原貌：`Token`、`Agent`、`GPU`、`API`、`Prompt`、`Transformer`、`Scaling Law`、`LLM`。
+- 公司 / 产品 / 项目代号保留英文原名：`OpenAI`、`Anthropic`、`Claude`、`Meta`、`DeepMind`、`JEPA`、`AlphaFold`。
+- 中文优先用「其他」，不用「其它」。
+- 同一段落内，指同一对象的词必须前后统一（典型：「网络」与「编码器」——见下）。
+
+## 二、易混译法（必须统一）
+
+| 英文 / 概念 | 统一译法 | 说明 / 禁用写法 |
+|---|---|---|
+| embedding vector | 嵌入向量 | 全篇统一；**禁止**和「嵌入表征」混用 |
+| embedding | 嵌入 / 嵌入向量 | 指向量时一律「嵌入向量」 |
+| representation | 表征 | 「内部表征」「抽象状态表征」；与「嵌入向量」是不同层级，勿混 |
+| network / encoder | 网络 / 编码器 | 二者**非同义**：encoder 特指"输入→嵌入"的网络。**同一段内**指同一对象时用词统一（如技术拆解段统一「编码器」），其余语境「网络」正常用；`孪生神经网络` 等固定术语不可改 |
+| representation collapse | 表征坍缩 | |
+| contrastive learning | 对比学习 | |
+| joint embedding | 联合嵌入 | |
+| world model | 世界模型 | |
+| behavioral cloning | 行为克隆 | |
+| hierarchical world model | 分层世界模型 | 与具体实现 `LeWorld Model`（专名，不译）区分开 |
+| intelligence | 讲**可交付、可买卖的东西**时译 **AI**；讲**能力或概念本身**时保留 **智能** | 用户 2026-09-11 口径：全篇一律译「智能」读起来别扭。**判定法**：能换成「算力 / 服务 / 产品」而意思不变的，译 AI（「把 AI 这种新的大宗商品交付给更多人」「极其廉价的 AI」「便宜得多的 AI」）；跟人脑对比、跟 AGI 连用、或讨论智能本身的，留「智能」（「不断堆叠专门化的智能」「世界上永远有对智能的需求」「这不是理解智能的方式」）。`artificial general intelligence` 固定译「通用人工智能」 |
+| superintelligence / superintelligent | 超级智能 | 【已确认】（用户 2026-11-19 口径）当原片明确说 `superintelligence` 而非 `AGI` 时，全篇（含标题、导读与正文）统一译作「超级智能」，**不要替换为 `AGI`**（二者能力边界不同，AGI 指人类水平的通用人工智能，超级智能指全面远超人类的系统） |
+| FLOPS / FLOPs | **FLOPS** = 每秒浮点运算次数（速率），**FLOPs** = 浮点运算总量 | 用户 2026-09-21 问过。芯片算力一律 FLOPS（TFLOPS / PFLOPS）；只有讲一次任务的总运算量才用 FLOPs。首现括注「每秒浮点运算次数」。2026-10-13 修订：原文讲的若是 Token 吞吐、价格等其他效率指标，保留原指标，不改写成 FLOPS |
+| compute per dollar | 每美元算力（compute per dollar） | 首现括注英文原词。2026-10-13 修订：「每美元算力」本身不是单一指标，保留原文的测量定义与单位，只有明确在讲浮点运算速率时才写成 FLOPS |
+| retention（员工） | 留存率 | **不要写「流动率」**：流动率指人员流动，意思相反 |
+| NVIDIA | 英伟达 | 用户 2026-09-21 口径：正文一律中文；产品名 NVLink / NVL72 / GB300 / Blackwell 保留英文；图内文字同 |
+| steel manning / steel man | 钢人辩护（最强版辩护） | 指替反方构造**最强**论证；**严禁**译作"稻草人"——straw man（稻草人谬误：歪曲对方立场再攻击）是其**反义词** |
+| Agent Swarms / cluster | **Agent 蜂群 / AI 蜂群**（指 swarm），**集群 / 算力集群**（指 GPU/服务器 cluster） | 【已确认】（用户 2026-11-22 口径）同篇同时出现 `cluster` 与 `swarm` 时**严禁都译成「集群」**，避免把“入侵算力集群”与“庞大 Agent 蜂群”混淆 |
+| RL / RSI（高频通用缩写） | 首次出现写全称+缩写（如 `强化学习（RL）`、`RSI（递归自我改进）`），后续全文统一用简称 `RL` / `RSI` | 【已确认】（用户 2026-11-22 口径）高频共识术语不前后反复切换中英文；`RLHF（基于人类反馈的强化学习）` 作为专名全称释义保留 |
+
+## 三、模型 / 架构名写法（连字符风格统一）
+
+| 统一写法 | 说明 |
+|---|---|
+| JEPA | 全称 **Joint Embedding Predictive Architecture（联合嵌入预测架构）**，注意"预测"二字不可漏 |
+| V-JEPA 2 | 带连字符；全系列（含逐字稿）拉齐为此写法 |
+| VL-JEPA | 带连字符；**全系列锁定此写法，弃用「VLJA」**（早期逐字稿如残留 VLJA 须改） |
+| VLA | 视觉-语言-动作模型（Vision-Language-Action） |
+| 𝝅0.7 / 𝝅 模型 | Physical Intelligence 的机器人模型；**统一用 𝝅0.7（π0.7），弃用「PI-07」** |
+| LeWorld Model | 专名，不译、不加括注「分层世界模型」 |
+| DINO / DINO V3 | |
+| Barlow Twins / VICReg | |
+
+## 三-补、其他易混写法
+
+| 英文 / 概念 | 统一译法 | 说明 |
+|---|---|---|
+| stack | 技术栈 | technology / software stack **统一用「技术栈」，弃用「堆栈」**；2026-10-13 补：数据结构语境的 stack / call stack 译「栈 / 调用栈」，歧义时查源段，不做全局替换 |
+| end effector | 末端执行器 | |
+| CEM (cross-entropy method) | 交叉熵方法 | |
+| phenomenological model | 现象学模型 | |
+
+## 四、人名 / 机构（首次出现写法）
+- Yann LeCun（图灵奖得主）、Demis Hassabis、Benedict Evans
+- Stéphane Deny（带重音符）、Horace Barlow、Alec Radford、Ilya Sutskever
+- Meta FAIR、Omni Labs、Physical Intelligence、Welch Labs

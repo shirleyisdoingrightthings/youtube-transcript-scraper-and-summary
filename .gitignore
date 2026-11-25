@@ -1,0 +1,32 @@
+.env
+output/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# logs/system_changelog.md 为公开的系统演进史；
+# logs/workflow_execution.md 为个人日常选题与执行流水账，不进公开仓库。
+logs/workflow_execution.md
+
+# 本地专属编辑品牌与署名覆盖配置（参考 skills/local_overrides.example.md，勿提交）
+skills/local_overrides.md
+
+# 本地工具状态 / 临时工作文件（勿提交）
+.claude/
+err.log
+transcript_temp.json
+talk_transcript.json
+transcript_*.json
+# 待用字幕：进 transcripts_pending/ 后会按视频原标题重命名，
+# 不再匹配上面的 transcript_*.json，必须单独忽略整个目录
+transcripts_pending/
+
+# 播客雷达的本地状态：SQLite 库（二进制、每天增长）、抓取日志、生成的榜单。
+# 全部可由 `python3 radar.py poll` 重建，频道白名单 radar_channels.json 才是要进版本的那份。
+radar_data/
+
+# Python 虚拟环境与构建产物
+.venv/
+venv/
+*.egg-info/
